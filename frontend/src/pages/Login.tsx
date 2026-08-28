@@ -5,7 +5,7 @@ import { CheckIcon } from '../components/icons'
 
 const MAX_LENGTH = 6
 const MIN_LENGTH = 4
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'submit', '0', 'back']
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', '0', 'submit']
 
 export default function Login({
   pinSet,
