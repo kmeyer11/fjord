@@ -14,11 +14,24 @@ function StatusDot({ ok }: { ok: boolean }) {
   return <span className={`size-2 rounded-full ${ok ? 'bg-moss' : 'bg-text-tertiary'}`} />
 }
 
+type CalendarStatus = {
+  configured: boolean
+  icloud_username: string | null
+  last_synced_at: string | null
+  last_error: string | null
+}
+
 export default function Settings() {
   const [feedUrl, setFeedUrl] = useState<string | null>(null)
-  const [calStatus, setCalStatus] = useState<{ configured: boolean; last_synced_at: string | null; last_error: string | null } | null>(null)
+  const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  const [connecting, setConnecting] = useState(false)
+  const [icloudEmail, setIcloudEmail] = useState('')
+  const [icloudPassword, setIcloudPassword] = useState('')
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const [connectSubmitting, setConnectSubmitting] = useState(false)
 
   const [changingPin, setChangingPin] = useState(false)
   const [newPin, setNewPin] = useState('')
@@ -61,6 +74,28 @@ export default function Settings() {
     }
   }
 
+  async function connectICloud() {
+    if (!icloudEmail || !icloudPassword) return
+    setConnectSubmitting(true)
+    setConnectError(null)
+    try {
+      await api.connectICloud(icloudEmail, icloudPassword)
+      setIcloudEmail('')
+      setIcloudPassword('')
+      setConnecting(false)
+      loadCalStatus()
+    } catch (e) {
+      setConnectError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setConnectSubmitting(false)
+    }
+  }
+
+  async function disconnectICloud() {
+    await api.disconnectICloud()
+    loadCalStatus()
+  }
+
   async function savePin() {
     if (newPin.length < 4) return
     await api.changePin(newPin)
@@ -85,30 +120,78 @@ export default function Settings() {
             <div className="flex items-center gap-2">
               <StatusDot ok={!!calStatus?.configured} />
               <span className="text-[14px] text-text">
-                {calStatus?.configured ? 'Connected' : 'Not connected'}
+                {calStatus?.configured ? `Connected as ${calStatus.icloud_username}` : 'Not connected'}
               </span>
             </div>
-            <button
-              onClick={refreshCalendar}
-              disabled={refreshing || !calStatus?.configured}
-              className="rounded-full border border-hairline px-3 py-1 text-[13px] font-medium text-text-secondary disabled:opacity-40"
-            >
-              {refreshing ? 'Refreshing…' : 'Refresh now'}
-            </button>
+            {calStatus?.configured && (
+              <button
+                onClick={refreshCalendar}
+                disabled={refreshing}
+                className="rounded-full border border-hairline px-3 py-1 text-[13px] font-medium text-text-secondary disabled:opacity-40"
+              >
+                {refreshing ? 'Refreshing…' : 'Refresh now'}
+              </button>
+            )}
           </div>
+
           {calStatus?.configured ? (
-            <p className="mt-2 text-[12px] text-text-tertiary">
-              {calStatus.last_error
-                ? `Last sync failed: ${calStatus.last_error}`
-                : calStatus.last_synced_at
-                  ? `Last synced ${new Date(calStatus.last_synced_at).toLocaleString()}`
-                  : 'Not synced yet'}
-            </p>
+            <>
+              <p className="mt-2 text-[12px] text-text-tertiary">
+                {calStatus.last_error
+                  ? `Last sync failed: ${calStatus.last_error}`
+                  : calStatus.last_synced_at
+                    ? `Last synced ${new Date(calStatus.last_synced_at).toLocaleString()}`
+                    : 'Not synced yet'}
+              </p>
+              <button onClick={disconnectICloud} className="mt-3 text-[13px] font-medium text-clay">
+                Disconnect
+              </button>
+            </>
+          ) : connecting ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <input
+                type="email"
+                autoFocus
+                value={icloudEmail}
+                onChange={(e) => setIcloudEmail(e.target.value)}
+                placeholder="you@icloud.com"
+                className="rounded-lg border border-hairline bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
+              />
+              <input
+                type="password"
+                value={icloudPassword}
+                onChange={(e) => setIcloudPassword(e.target.value)}
+                placeholder="app-specific password"
+                className="rounded-lg border border-hairline bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
+              />
+              {connectError && <p className="text-[12px] text-clay">{connectError}</p>}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={connectICloud}
+                  disabled={!icloudEmail || !icloudPassword || connectSubmitting}
+                  className="rounded-full bg-accent px-3 py-1.5 text-[13px] font-semibold text-bg disabled:opacity-40"
+                >
+                  {connectSubmitting ? 'Connecting…' : 'Connect'}
+                </button>
+                <button onClick={() => setConnecting(false)} className="text-[13px] text-text-tertiary">
+                  Cancel
+                </button>
+              </div>
+              <p className="text-[12px] text-text-tertiary">
+                Generate an app-specific password at{' '}
+                <a href="https://appleid.apple.com" target="_blank" rel="noreferrer" className="text-accent">
+                  appleid.apple.com
+                </a>{' '}
+                — never your main Apple ID password.
+              </p>
+            </div>
           ) : (
-            <p className="mt-2 text-[12px] text-text-tertiary">
-              Set FJORD_ICLOUD_USERNAME and FJORD_ICLOUD_APP_PASSWORD (an app-specific password from
-              appleid.apple.com — not your main Apple ID password) on the server, then restart it.
-            </p>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-[12px] text-text-tertiary">Read your existing calendars into Fjord, read-only.</p>
+              <button onClick={() => setConnecting(true)} className="text-[13px] font-medium text-accent">
+                Connect
+              </button>
+            </div>
           )}
         </SettingsSection>
 

@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 backend/fjord.db
 backend/.env
+backend/.fjord_credentials.key
 
 # Node / frontend
 frontend/node_modules/

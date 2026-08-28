@@ -72,16 +72,44 @@ etc.) at this container rather than exposing port 8000 directly.
 
 Inbound sync (reading your existing calendars) needs an iCloud app-specific
 password — generate one at [appleid.apple.com](https://appleid.apple.com),
-never your main Apple ID password — then set it before starting the backend:
+never your main Apple ID password.
+
+**Settings page** (recommended — no server access needed, good for anyone
+running their own copy of Fjord): log in, go to Settings → Apple Calendar →
+Connect, enter the iCloud email and app-specific password. Fjord tests the
+connection before saving anything, so a typo fails immediately with a clear
+error instead of silently not syncing. The app password is encrypted before
+it's stored — see "How credentials are stored" below.
+
+**Environment variables** (alternative, for headless/automated deployment —
+takes lower priority than the Settings page if both are set):
 
 ```bash
 export FJORD_ICLOUD_USERNAME="you@icloud.com"
 export FJORD_ICLOUD_APP_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 ```
 
-Leave both unset to run with Apple Calendar sync disabled — everything else
-works fine without it. Outbound publishing (the `.ics` feed) needs no config;
-its subscribe URL is on the Settings page once you're logged in.
+Leave everything unset to run with Apple Calendar sync disabled — everything
+else works fine without it. Outbound publishing (the `.ics` feed) needs no
+config; its subscribe URL is on the Settings page once you're logged in.
+
+#### How credentials are stored
+
+The app password is encrypted (`cryptography`'s Fernet) before it's written
+to the database. The encryption key lives in its own file —
+`backend/.fjord_credentials.key` locally, `/data/credentials.key` in Docker —
+separate from the database file and never committed to git. This means a
+copy of the database alone (a backup, an accidental `git add`) doesn't carry
+what's needed to decrypt the password; both files are needed together. It's
+not a claim of perfect security — anyone with full access to the running
+machine can still get it, same as any locally-stored secret — but it's real
+protection against casual exposure, consistent with this app's PIN gate
+being "keep out casual snoopers," not bank-grade.
+
+If you ever need to move the database to a new machine, take the key file
+with it (`backend/.fjord_credentials.key` or the Docker volume it lives on)
+or the stored iCloud credentials won't decrypt — you'd just reconnect from
+Settings.
 
 ### First run / PIN
 

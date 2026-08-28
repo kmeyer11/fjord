@@ -74,3 +74,8 @@ class ExternalEvent(BaseModel):
     start: datetime
     end: datetime
     all_day: bool
+
+
+class ICloudCredentials(BaseModel):
+    username: str
+    app_password: str

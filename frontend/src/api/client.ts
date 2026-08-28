@@ -13,7 +13,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`${res.status} ${res.statusText}: ${body}`)
+    let detail: string | undefined
+    try {
+      detail = (JSON.parse(body) as { detail?: string }).detail
+    } catch {
+      // not JSON — fall through to the raw response below
+    }
+    throw new Error(detail ?? `${res.status} ${res.statusText}: ${body}`)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
@@ -59,5 +65,16 @@ export const api = {
       `/calendar/external-events?start=${start.toISOString()}&end=${end.toISOString()}${force ? '&force=true' : ''}`,
     ),
   getCalendarStatus: () =>
-    request<{ configured: boolean; last_synced_at: string | null; last_error: string | null }>('/calendar/status'),
+    request<{
+      configured: boolean
+      icloud_username: string | null
+      last_synced_at: string | null
+      last_error: string | null
+    }>('/calendar/status'),
+  connectICloud: (username: string, app_password: string) =>
+    request<{ ok: true }>('/calendar/icloud-credentials', {
+      method: 'POST',
+      body: JSON.stringify({ username, app_password }),
+    }),
+  disconnectICloud: () => request<{ ok: true }>('/calendar/icloud-credentials', { method: 'DELETE' }),
 }

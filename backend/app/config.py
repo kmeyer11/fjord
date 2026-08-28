@@ -19,9 +19,17 @@ class Settings(BaseSettings):
     port: int = 8000
     frontend_dist_dir: Path = BACKEND_DIR.parent / "frontend" / "dist"
 
+    # Key used to encrypt secrets (e.g. the iCloud app password) stored in the
+    # database — deliberately a separate local file, not a DB column, so the
+    # database alone (a backup, a stray git add) doesn't carry what's needed
+    # to decrypt it. Auto-generated on first run if missing.
+    credentials_key_path: Path = BACKEND_DIR / ".fjord_credentials.key"
+
     # iCloud CalDAV (inbound, read-only). Generate an app-specific password at
-    # appleid.apple.com — never use the main Apple ID password here. Leave unset
-    # to run with Apple Calendar sync disabled.
+    # appleid.apple.com — never use the main Apple ID password here. Preferred
+    # path is the Settings page (stored encrypted in the DB, which takes
+    # priority if set); these env vars are a fallback for headless/automated
+    # deployment. Leave both unset to run with Apple Calendar sync disabled.
     icloud_username: str | None = None
     icloud_app_password: str | None = None
     caldav_url: str = "https://caldav.icloud.com"
