@@ -1,7 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import Logo from './Logo'
-import { CalendarIcon, GearIcon, GridIcon } from './icons'
+import Switch from './Switch'
+import { CalendarIcon, GearIcon, GlobeIcon, GridIcon } from './icons'
 
 function sidebarLinkClasses(isActive: boolean) {
   return [
@@ -15,6 +16,19 @@ function tabLinkClasses(isActive: boolean) {
     'flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors',
     isActive ? 'text-accent-strong' : 'text-text-tertiary',
   ].join(' ')
+}
+
+function LanguageToggle() {
+  const { t, language, setLanguage } = useLanguage()
+  return (
+    <div className="flex items-center justify-between rounded-lg px-3 py-1.5">
+      <span className="flex items-center gap-2.5 text-[13px] font-medium text-text-secondary">
+        <GlobeIcon className="size-[18px]" />
+        {language === 'da' ? 'Dansk' : 'English'}
+      </span>
+      <Switch checked={language === 'da'} onChange={(checked) => setLanguage(checked ? 'da' : 'en')} label={t.settings.language} />
+    </div>
+  )
 }
 
 export default function Layout() {
@@ -40,11 +54,18 @@ export default function Layout() {
             </NavLink>
           ))}
         </div>
+
+        <div className="mt-auto border-t border-hairline pt-3">
+          <LanguageToggle />
+        </div>
       </nav>
 
       <header className="flex items-center gap-2 border-b border-hairline bg-surface/70 px-4 py-3 backdrop-blur-xl md:hidden">
         <Logo className="size-[22px]" />
         <span className="text-[17px] font-semibold tracking-tight text-text">Fjord</span>
+        <div className="ml-auto">
+          <LanguageToggle />
+        </div>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto pb-[calc(3.75rem+env(safe-area-inset-bottom))] md:pb-0">
