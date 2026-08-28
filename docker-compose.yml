@@ -1,0 +1,16 @@
+services:
+  fjord:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - fjord-data:/data
+    environment:
+      # iCloud CalDAV (optional) — an app-specific password from appleid.apple.com,
+      # never your main Apple ID password. Leave unset to disable Apple Calendar sync.
+      FJORD_ICLOUD_USERNAME: ${FJORD_ICLOUD_USERNAME:-}
+      FJORD_ICLOUD_APP_PASSWORD: ${FJORD_ICLOUD_APP_PASSWORD:-}
+
+volumes:
+  fjord-data:

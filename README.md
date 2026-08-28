@@ -54,6 +54,20 @@ cd ../backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 FastAPI serves the built frontend from `frontend/dist` alongside the API, so
 only one process and one port are needed.
 
+### Docker
+
+```bash
+docker compose up --build
+```
+
+Builds the frontend and backend into one image (see `Dockerfile`) and serves
+on port 8000, with the SQLite database on a named volume (`fjord-data`) so it
+survives rebuilds. Set `FJORD_ICLOUD_USERNAME`/`FJORD_ICLOUD_APP_PASSWORD` in
+a `.env` file next to `docker-compose.yml` to enable Apple Calendar sync (see
+below) — Compose picks those up automatically. This is the intended path for
+running Fjord on the homelab server: point a reverse proxy (Caddy, Traefik,
+etc.) at this container rather than exposing port 8000 directly.
+
 ### Apple Calendar sync (optional)
 
 Inbound sync (reading your existing calendars) needs an iCloud app-specific
