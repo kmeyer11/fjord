@@ -1,0 +1,131 @@
+import { useEffect, useState } from 'react'
+import { api } from '../api/client'
+import Logo from '../components/Logo'
+import { CheckIcon } from '../components/icons'
+
+const MAX_LENGTH = 6
+const MIN_LENGTH = 4
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'submit', '0', 'back']
+
+export default function Login({
+  pinSet,
+  onSuccess,
+}: {
+  pinSet: boolean
+  onSuccess: () => void
+}) {
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  async function submit(value: string) {
+    if (value.length < MIN_LENGTH || submitting) return
+    setSubmitting(true)
+    setError(false)
+    try {
+      await api.login(value)
+      onSuccess()
+    } catch {
+      setError(true)
+      setPin('')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function press(key: string) {
+    if (submitting) return
+    if (key === 'back') {
+      setPin((p) => p.slice(0, -1))
+      return
+    }
+    if (key === 'submit') {
+      void submit(pin)
+      return
+    }
+    if (pin.length >= MAX_LENGTH) return
+    const next = pin + key
+    setPin(next)
+    if (next.length === MAX_LENGTH) void submit(next)
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (/^[0-9]$/.test(e.key)) press(e.key)
+      else if (e.key === 'Backspace') press('back')
+      else if (e.key === 'Enter') void submit(pin)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, submitting])
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-8 px-6">
+      <div className="flex flex-col items-center gap-3">
+        <Logo className="size-10" />
+        <div className="text-center">
+          <p className="text-[17px] font-semibold text-text">{pinSet ? 'Enter Passcode' : 'Set a Passcode'}</p>
+          <p className="mt-0.5 text-[13px] text-text-tertiary">
+            {pinSet ? 'Unlock Fjord to continue' : '4–6 digits, keeps out casual snoopers'}
+          </p>
+        </div>
+      </div>
+
+      <div className={['flex gap-3', error ? 'animate-[shake_0.4s]' : ''].join(' ')}>
+        {Array.from({ length: Math.max(pin.length, MIN_LENGTH) }, (_, i) => (
+          <span
+            key={i}
+            className={[
+              'size-3 rounded-full border transition-colors',
+              i < pin.length ? 'border-accent bg-accent' : 'border-hairline-strong bg-transparent',
+              error ? 'border-clay bg-clay' : '',
+            ].join(' ')}
+          />
+        ))}
+      </div>
+
+      {error && <p className="-mt-4 text-[13px] text-clay">Incorrect passcode</p>}
+
+      <div className="grid grid-cols-3 gap-4">
+        {KEYS.map((key, i) => {
+          if (key === 'submit') {
+            const enabled = pin.length >= MIN_LENGTH && !submitting
+            return (
+              <button
+                key={i}
+                onClick={() => press(key)}
+                disabled={!enabled}
+                aria-label="Submit passcode"
+                className="flex size-16 items-center justify-center rounded-full bg-accent text-bg transition-opacity active:opacity-80 disabled:opacity-0"
+              >
+                <CheckIcon className="size-6" />
+              </button>
+            )
+          }
+          return (
+            <button
+              key={i}
+              onClick={() => press(key)}
+              disabled={submitting}
+              className={[
+                'flex size-16 items-center justify-center rounded-full text-[24px] font-medium transition-colors active:bg-black/[0.06] disabled:opacity-50',
+                key === 'back' ? 'text-text-secondary' : 'bg-surface text-text border border-hairline',
+              ].join(' ')}
+            >
+              {key === 'back' ? '⌫' : key}
+            </button>
+          )
+        })}
+      </div>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-8px); }
+          40%, 80% { transform: translateX(8px); }
+        }
+      `}</style>
+    </div>
+  )
+}

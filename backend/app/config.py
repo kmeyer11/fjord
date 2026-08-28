@@ -19,5 +19,12 @@ class Settings(BaseSettings):
     port: int = 8000
     frontend_dist_dir: Path = BACKEND_DIR.parent / "frontend" / "dist"
 
+    # iCloud CalDAV (inbound, read-only). Generate an app-specific password at
+    # appleid.apple.com — never use the main Apple ID password here. Leave unset
+    # to run with Apple Calendar sync disabled.
+    icloud_username: str | None = None
+    icloud_app_password: str | None = None
+    caldav_url: str = "https://caldav.icloud.com"
+
 
 settings = Settings()

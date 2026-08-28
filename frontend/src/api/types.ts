@@ -29,3 +29,13 @@ export interface Task {
   created_at: string
   updated_at: string
 }
+
+/** A read-only event pulled from an Apple Calendar via CalDAV. */
+export interface ExternalEvent {
+  id: string
+  calendar: string
+  title: string
+  start: string
+  end: string
+  all_day: boolean
+}

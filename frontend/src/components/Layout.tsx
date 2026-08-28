@@ -1,10 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import Logo from './Logo'
-import { CalendarIcon, GridIcon } from './icons'
+import { CalendarIcon, GearIcon, GridIcon } from './icons'
 
 const navItems = [
   { to: '/', label: 'Projects', icon: GridIcon, end: true },
   { to: '/calendar', label: 'Calendar', icon: CalendarIcon, end: false },
+  { to: '/settings', label: 'Settings', icon: GearIcon, end: false },
 ]
 
 function sidebarLinkClasses(isActive: boolean) {

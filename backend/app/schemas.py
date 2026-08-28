@@ -65,3 +65,12 @@ class Task(TaskBase):
     project_id: int
     created_at: datetime
     updated_at: datetime
+
+
+class ExternalEvent(BaseModel):
+    id: str
+    calendar: str
+    title: str
+    start: datetime
+    end: datetime
+    all_day: bool

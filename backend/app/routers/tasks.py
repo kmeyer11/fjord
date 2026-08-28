@@ -14,6 +14,16 @@ def _get_task_or_404(task_id: int, db: Session) -> models.Task:
     return task
 
 
+@router.get("", response_model=list[schemas.Task])
+def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(get_db)):
+    """All tasks across every project — the calendar view and its backlog panel
+    need a cross-project list, unlike the per-project listing under /api/projects."""
+    query = db.query(models.Task)
+    if status is not None:
+        query = query.filter(models.Task.status == status)
+    return query.order_by(models.Task.id).all()
+
+
 @router.get("/{task_id}", response_model=schemas.Task)
 def get_task(task_id: int, db: Session = Depends(get_db)):
     return _get_task_or_404(task_id, db)
