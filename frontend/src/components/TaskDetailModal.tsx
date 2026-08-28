@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Task } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
+import { toDatetimeLocalValue } from '../lib/date'
 import Modal from './Modal'
 
 export default function TaskDetailModal({
@@ -11,19 +12,27 @@ export default function TaskDetailModal({
 }: {
   task: Task
   onClose: () => void
-  onSave: (data: { title: string; description: string }) => Promise<void>
+  onSave: (data: { title: string; description: string; due_at?: string }) => Promise<void>
   onDelete: () => Promise<void>
 }) {
   const { t } = useLanguage()
+  const isMeeting = task.category === 'meeting'
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description)
+  const [dueAt, setDueAt] = useState(task.due_at ? toDatetimeLocalValue(new Date(task.due_at)) : '')
   const [submitting, setSubmitting] = useState(false)
 
+  const canSave = title.trim() && (!isMeeting || dueAt) && !submitting
+
   async function handleSave() {
-    if (!title.trim() || submitting) return
+    if (!canSave) return
     setSubmitting(true)
     try {
-      await onSave({ title: title.trim(), description })
+      await onSave({
+        title: title.trim(),
+        description,
+        due_at: isMeeting ? new Date(dueAt).toISOString() : undefined,
+      })
       onClose()
     } finally {
       setSubmitting(false)
@@ -52,7 +61,7 @@ export default function TaskDetailModal({
           <span className="text-[15px] font-semibold text-text">{t.taskModal.title}</span>
           <button
             onClick={handleSave}
-            disabled={!title.trim() || submitting}
+            disabled={!canSave}
             className="text-[15px] font-semibold text-accent disabled:opacity-40"
           >
             {t.taskModal.save}
@@ -93,6 +102,21 @@ export default function TaskDetailModal({
             className="resize-none rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[14px] text-text outline-none placeholder:text-text-tertiary focus:border-accent"
           />
         </div>
+
+        {isMeeting && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="task-due-at" className="text-[13px] font-medium text-text-secondary">
+              {t.calendar.meetingDateTime}
+            </label>
+            <input
+              id="task-due-at"
+              type="datetime-local"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              className="rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[15px] text-text outline-none focus:border-accent"
+            />
+          </div>
+        )}
 
         <button
           type="button"

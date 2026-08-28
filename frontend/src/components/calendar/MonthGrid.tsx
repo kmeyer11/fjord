@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { ExternalEvent, Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { dateKey, getMonthGridDays, isSameDay } from '../../lib/date'
+import { taskColor } from '../../lib/colors'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 
 const MAX_VISIBLE_DESKTOP = 3
@@ -86,7 +87,7 @@ function MonthDayCell({
             <MonthTaskChip
               key={t.id}
               task={t}
-              color={projectColors.get(t.project_id) ?? '#3c6e90'}
+              color={taskColor(t, projectColors)}
               onClick={onTaskClick ? () => onTaskClick(t) : undefined}
             />
           ))}
@@ -99,7 +100,7 @@ function MonthDayCell({
               <span
                 key={t.id}
                 className="size-1.5 rounded-full"
-                style={{ backgroundColor: projectColors.get(t.project_id) ?? '#3c6e90' }}
+                style={{ backgroundColor: taskColor(t, projectColors) }}
               />
             ))}
           </div>

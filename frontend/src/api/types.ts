@@ -1,5 +1,6 @@
 export type TaskStatus = 'backlog' | 'scheduled' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high'
+export type TaskCategory = 'task' | 'meeting'
 
 export interface TaskCounts {
   backlog: number
@@ -20,11 +21,12 @@ export interface ProjectWithCounts extends Project {
 
 export interface Task {
   id: number
-  project_id: number
+  project_id: number | null
   title: string
   description: string
   status: TaskStatus
   priority: TaskPriority
+  category: TaskCategory
   due_at: string | null
   created_at: string
   updated_at: string

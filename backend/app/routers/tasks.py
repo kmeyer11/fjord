@@ -24,6 +24,25 @@ def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(ge
     return query.order_by(models.Task.id).all()
 
 
+@router.post("", response_model=schemas.Task, status_code=201)
+def create_meeting(payload: schemas.MeetingCreate, db: Session = Depends(get_db)):
+    """Meetings are project-less tasks, so unlike regular tasks (created via
+    POST /api/projects/{project_id}/tasks) they get a standalone route here."""
+    task = models.Task(
+        project_id=None,
+        title=payload.title,
+        description=payload.description,
+        category=models.TaskCategory.meeting,
+        status=models.TaskStatus.scheduled,
+        priority=models.TaskPriority.medium,
+        due_at=payload.due_at,
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
 @router.get("/{task_id}", response_model=schemas.Task)
 def get_task(task_id: int, db: Session = Depends(get_db)):
     return _get_task_or_404(task_id, db)

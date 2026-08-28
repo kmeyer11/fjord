@@ -2,6 +2,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { useEffect, useState } from 'react'
 import type { ExternalEvent, Task } from '../../api/types'
 import { isSameDay } from '../../lib/date'
+import { taskColor } from '../../lib/colors'
 import { CalendarTaskBlock, ExternalEventBlock, HOUR_HEIGHT } from './EventBlocks'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -61,7 +62,7 @@ export default function DayColumn({
           <CalendarTaskBlock
             key={t.id}
             task={t}
-            color={projectColors.get(t.project_id) ?? '#3c6e90'}
+            color={taskColor(t, projectColors)}
             onClick={onTaskClick ? () => onTaskClick(t) : undefined}
           />
         ))}

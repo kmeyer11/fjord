@@ -51,3 +51,11 @@ export function getMonthGridDays(monthDate: Date): Date[] {
 export function formatMonth(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
+
+/** Local wall-clock value for <input type="datetime-local">, independent of
+ * timezone-shifting toISOString(). */
+export function toDatetimeLocalValue(date: Date): string {
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${dateKey(date)}T${hh}:${mm}`
+}

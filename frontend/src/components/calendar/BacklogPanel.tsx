@@ -2,6 +2,8 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
+import { taskColor } from '../../lib/colors'
+import NewMeetingInline from '../NewMeetingInline'
 
 export const BACKLOG_DROP_ID = 'backlog-panel'
 
@@ -40,11 +42,15 @@ function DraggableTask({ task, color, subtitle }: { task: Task; color: string; s
 export default function BacklogPanel({
   backlogTasks,
   scheduledTasks,
+  meetingTasks,
   projectColors,
+  onCreateMeeting,
 }: {
   backlogTasks: Task[]
   scheduledTasks: Task[]
+  meetingTasks: Task[]
   projectColors: Map<number, string>
+  onCreateMeeting: (data: { title: string; due_at: string }) => Promise<void>
 }) {
   const { t, locale } = useLanguage()
   const { setNodeRef, isOver } = useDroppable({ id: BACKLOG_DROP_ID })
@@ -64,7 +70,7 @@ export default function BacklogPanel({
           <p className="px-1 text-[12px] text-text-tertiary">{t.calendar.nothingUnscheduled}</p>
         )}
         {backlogTasks.map((task) => (
-          <DraggableTask key={task.id} task={task} color={projectColors.get(task.project_id) ?? '#3c6e90'} />
+          <DraggableTask key={task.id} task={task} color={taskColor(task, projectColors)} />
         ))}
       </div>
 
@@ -78,7 +84,7 @@ export default function BacklogPanel({
               <DraggableTask
                 key={task.id}
                 task={task}
-                color={projectColors.get(task.project_id) ?? '#3c6e90'}
+                color={taskColor(task, projectColors)}
                 subtitle={
                   task.due_at
                     ? new Date(task.due_at).toLocaleString(locale, {
@@ -93,6 +99,31 @@ export default function BacklogPanel({
             ))}
         </div>
       )}
+
+      <div className="hidden flex-col gap-2 md:flex">
+        <h2 className="px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.meetings}</h2>
+        <NewMeetingInline onCreate={onCreateMeeting} />
+        {meetingTasks
+          .slice()
+          .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
+          .map((task) => (
+            <DraggableTask
+              key={task.id}
+              task={task}
+              color={taskColor(task, projectColors)}
+              subtitle={
+                task.due_at
+                  ? new Date(task.due_at).toLocaleString(locale, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })
+                  : undefined
+              }
+            />
+          ))}
+      </div>
     </div>
   )
 }

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models import TaskPriority, TaskStatus
+from app.models import TaskCategory, TaskPriority, TaskStatus
 
 
 class TaskCounts(BaseModel):
@@ -42,6 +42,7 @@ class TaskBase(BaseModel):
     description: str = ""
     status: TaskStatus = TaskStatus.backlog
     priority: TaskPriority = TaskPriority.medium
+    category: TaskCategory = TaskCategory.task
     due_at: datetime | None = None
 
 
@@ -62,9 +63,15 @@ class Task(TaskBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    project_id: int
+    project_id: int | None
     created_at: datetime
     updated_at: datetime
+
+
+class MeetingCreate(BaseModel):
+    title: str
+    description: str = ""
+    due_at: datetime
 
 
 class ExternalEvent(BaseModel):
