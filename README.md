@@ -9,9 +9,9 @@ complete feature list and build order. Short version:
 
 - **Projects dashboard** — cards with a color tag and backlog/scheduled/done counts.
 - **Backlog board** — kanban-lite (Backlog / Scheduled / Done) with drag-and-drop.
-- **Calendar view** *(coming next)* — week view mixing scheduled tasks with read-only
-  Apple Calendar events, plus a subscribable `.ics` feed for scheduled tasks.
-- **PIN login** *(coming later)* — single 4–6 digit PIN gate, no multi-user support.
+- **Calendar view** — week view (single-day on mobile) mixing scheduled tasks with
+  read-only Apple Calendar events, plus a subscribable `.ics` feed for scheduled tasks.
+- **PIN login** — single 4–6 digit PIN gate, no multi-user support.
 
 ## Stack
 
@@ -54,32 +54,56 @@ cd ../backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 FastAPI serves the built frontend from `frontend/dist` alongside the API, so
 only one process and one port are needed.
 
+### Apple Calendar sync (optional)
+
+Inbound sync (reading your existing calendars) needs an iCloud app-specific
+password — generate one at [appleid.apple.com](https://appleid.apple.com),
+never your main Apple ID password — then set it before starting the backend:
+
+```bash
+export FJORD_ICLOUD_USERNAME="you@icloud.com"
+export FJORD_ICLOUD_APP_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+```
+
+Leave both unset to run with Apple Calendar sync disabled — everything else
+works fine without it. Outbound publishing (the `.ics` feed) needs no config;
+its subscribe URL is on the Settings page once you're logged in.
+
+### First run / PIN
+
+The app is open (no login) until you set a PIN — the login screen doubles as
+the PIN-setup screen the first time. Change it later from Settings.
+
 ## Project layout
 
 ```
 backend/
   app/
-    main.py        FastAPI app, static frontend serving
-    config.py       Settings (DB path, host/port)
-    database.py     SQLAlchemy engine/session
-    models.py       Project, Task ORM models
-    schemas.py      Pydantic request/response schemas
-    routers/        API route handlers
+    main.py           FastAPI app, static frontend serving, router wiring
+    config.py          Settings (DB path, host/port, iCloud CalDAV creds)
+    database.py         SQLAlchemy engine/session
+    models.py           Project, Task, AppConfig ORM models
+    schemas.py           Pydantic request/response schemas
+    auth.py              PIN hashing + signed session cookies
+    caldav_client.py     Read-only iCloud CalDAV polling (with cache)
+    routers/             API route handlers (projects, tasks, calendar, auth, ics feed)
   requirements.txt
 frontend/
   src/
-    api/            Typed fetch client for the backend API
-    components/      Shared UI (layout, nav, cards, modals, board)
-    pages/          Dashboard, Backlog board, Calendar
+    api/                Typed fetch client for the backend API
+    components/          Shared UI (layout, nav, cards, modals, board)
+    components/calendar/  Week grid, day columns, backlog drag panel
+    lib/                 Date helpers, responsive breakpoint hook
+    pages/               Dashboard, Backlog board, Calendar, Login, Settings
 ```
 
 ## Build order
 
 1. ✅ Scaffold backend (FastAPI + SQLite schema) and frontend shell (React + Vite + Tailwind)
 2. ✅ Projects + backlog CRUD, no calendar yet
-3. Calendar view UI with local (in-app only) scheduling — no Apple sync yet
-4. CalDAV read integration — show existing Apple Calendar events in the calendar view
-5. `.ics` feed endpoint — publish scheduled tasks, confirm the subscribe flow works on Mac + iPhone
-6. PIN auth
+3. ✅ Calendar view UI with local (in-app only) scheduling — no Apple sync yet
+4. ✅ CalDAV read integration — show existing Apple Calendar events in the calendar view
+5. ✅ `.ics` feed endpoint — publish scheduled tasks (subscribe flow needs confirming on real Mac/iPhone hardware)
+6. ✅ PIN auth
 7. Confirm phone access over local Wi-Fi; wire up Tailscale for away-from-home access
 8. Polish pass, test on phone, iterate
