@@ -48,6 +48,8 @@ export const api = {
     data: { title: string; description?: string; priority?: TaskPriority },
   ) =>
     request<Task>(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify(data) }),
+  createMeeting: (data: { title: string; description?: string; due_at: string }) =>
+    request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
   updateTask: (
     id: number,
     data: Partial<{

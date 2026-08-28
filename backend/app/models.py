@@ -19,6 +19,11 @@ class TaskPriority(str, enum.Enum):
     high = "high"
 
 
+class TaskCategory(str, enum.Enum):
+    task = "task"
+    meeting = "meeting"
+
+
 class Project(Base):
     __tablename__ = "projects"
 
@@ -36,7 +41,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id"), nullable=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")
     status: Mapped[TaskStatus] = mapped_column(
@@ -45,10 +50,13 @@ class Task(Base):
     priority: Mapped[TaskPriority] = mapped_column(
         Enum(TaskPriority), nullable=False, default=TaskPriority.medium
     )
+    category: Mapped[TaskCategory] = mapped_column(
+        Enum(TaskCategory), nullable=False, default=TaskCategory.task
+    )
     due_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    project: Mapped["Project"] = relationship(back_populates="tasks")
+    project: Mapped["Project | None"] = relationship(back_populates="tasks")

@@ -87,11 +87,16 @@ export default function Calendar() {
   const tasksByDay = new Map<string, Task[]>()
   const backlogTasks: Task[] = []
   const scheduledTasks: Task[] = []
+  const meetingTasks: Task[] = []
   for (const task of tasks) {
     if (task.due_at) {
       const key = dateKey(new Date(task.due_at))
       tasksByDay.set(key, [...(tasksByDay.get(key) ?? []), task])
-      if (task.status === 'scheduled') scheduledTasks.push(task)
+      if (task.category === 'meeting') {
+        meetingTasks.push(task)
+      } else if (task.status === 'scheduled') {
+        scheduledTasks.push(task)
+      }
     } else if (task.status === 'backlog') {
       backlogTasks.push(task)
     }
@@ -110,7 +115,9 @@ export default function Calendar() {
     let update: Partial<Pick<Task, 'status' | 'due_at'>> | null = null
 
     if (event.over.id === BACKLOG_DROP_ID) {
-      if (task.status !== 'backlog') update = { status: 'backlog', due_at: null }
+      // Meetings have no backlog state — dropping one here would strand it
+      // off the calendar grid with no way back except editing its date.
+      if (task.category !== 'meeting' && task.status !== 'backlog') update = { status: 'backlog', due_at: null }
     } else {
       const slot = event.over.data.current as { date: Date; hour: number } | undefined
       if (slot) {
@@ -175,7 +182,16 @@ export default function Calendar() {
             />
           )}
         </div>
-        <BacklogPanel backlogTasks={backlogTasks} scheduledTasks={scheduledTasks} projectColors={projectColors} />
+        <BacklogPanel
+          backlogTasks={backlogTasks}
+          scheduledTasks={scheduledTasks}
+          meetingTasks={meetingTasks}
+          projectColors={projectColors}
+          onCreateMeeting={async (data) => {
+            const created = await api.createMeeting(data)
+            setTasks((prev) => [...prev, created])
+          }}
+        />
       </div>
 
       {editingTask && (

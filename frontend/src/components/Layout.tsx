@@ -24,7 +24,7 @@ function LanguageToggle() {
     <div className="flex items-center justify-between rounded-lg px-3 py-1.5">
       <span className="flex items-center gap-2.5 text-[13px] font-medium text-text-secondary">
         <GlobeIcon className="size-[18px]" />
-        {language === 'da' ? 'Dansk' : 'English'}
+        {language === 'da' ? 'Oversæt?' : 'Translate?'}
       </span>
       <Switch checked={language === 'da'} onChange={(checked) => setLanguage(checked ? 'da' : 'en')} label={t.settings.language} />
     </div>
