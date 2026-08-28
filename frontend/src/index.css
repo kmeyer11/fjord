@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/*
+  "New Nordic" theme: a warm linen/paper light mode with fjord-water blues
+  and misty grays, rather than a generic white-SaaS palette, paired with
+  Apple-style materials (translucent surfaces, hairline separators, tinted
+  selection states) instead of flat cards and heavy borders.
+*/
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+
+  --color-bg: #f2efe9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-hairline: rgba(28, 33, 37, 0.09);
+  --color-hairline-strong: rgba(28, 33, 37, 0.16);
+  --color-text: #1c2126;
+  --color-text-secondary: #5c6670;
+  --color-text-tertiary: #838d95;
+
+  --color-accent: #1f7a9c;
+  --color-accent-strong: #175f79;
+  --color-accent-soft: rgba(31, 122, 156, 0.1);
+
+  /* Nordic project palette — muted, earthy hues rather than saturated SaaS defaults */
+  --color-fjord: #3c6e90;
+  --color-glacier: #2f8f89;
+  --color-moss: #57784a;
+  --color-birch: #a97e2e;
+  --color-clay: #9c4a34;
+  --color-heather: #75587f;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(31, 122, 156, 0.06), transparent),
+    radial-gradient(ellipse 700px 400px at 100% 0%, rgba(117, 88, 127, 0.04), transparent);
+  background-attachment: fixed;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-hairline-strong) transparent;
+}
