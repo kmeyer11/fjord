@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import Logo from '../components/Logo'
 import { CheckIcon } from '../components/icons'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const MAX_LENGTH = 6
 const MIN_LENGTH = 4
@@ -14,6 +15,7 @@ export default function Login({
   pinSet: boolean
   onSuccess: () => void
 }) {
+  const { t } = useLanguage()
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -65,10 +67,8 @@ export default function Login({
       <div className="flex flex-col items-center gap-3">
         <Logo className="size-10" />
         <div className="text-center">
-          <p className="text-[17px] font-semibold text-text">{pinSet ? 'Enter Passcode' : 'Set a Passcode'}</p>
-          <p className="mt-0.5 text-[13px] text-text-tertiary">
-            {pinSet ? 'Unlock Fjord to continue' : '4–6 digits, keeps out casual snoopers'}
-          </p>
+          <p className="text-[17px] font-semibold text-text">{pinSet ? t.login.enterPasscode : t.login.setPasscode}</p>
+          <p className="mt-0.5 text-[13px] text-text-tertiary">{pinSet ? t.login.unlockHint : t.login.setHint}</p>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function Login({
         ))}
       </div>
 
-      {error && <p className="-mt-4 text-[13px] text-clay">Incorrect passcode</p>}
+      {error && <p className="-mt-4 text-[13px] text-clay">{t.login.incorrect}</p>}
 
       <div className="grid grid-cols-3 gap-4">
         {KEYS.map((key, i) => {

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { useLanguage } from '../i18n/LanguageContext'
+import Switch from '../components/Switch'
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -22,6 +24,7 @@ type CalendarStatus = {
 }
 
 export default function Settings() {
+  const { t, locale, language, setLanguage } = useLanguage()
   const [feedUrl, setFeedUrl] = useState<string | null>(null)
   const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -112,15 +115,15 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-6 md:px-8 md:pt-10">
-      <h1 className="mb-7 text-[28px] font-bold tracking-tight text-text md:text-[32px]">Settings</h1>
+      <h1 className="mb-7 text-[28px] font-bold tracking-tight text-text md:text-[32px]">{t.settings.title}</h1>
 
       <div className="flex flex-col gap-6">
-        <SettingsSection title="Apple Calendar">
+        <SettingsSection title={t.settings.appleCalendar}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <StatusDot ok={!!calStatus?.configured} />
               <span className="text-[14px] text-text">
-                {calStatus?.configured ? `Connected as ${calStatus.icloud_username}` : 'Not connected'}
+                {calStatus?.configured ? t.settings.connected(calStatus.icloud_username ?? '') : t.settings.notConnected}
               </span>
             </div>
             {calStatus?.configured && (
@@ -129,7 +132,7 @@ export default function Settings() {
                 disabled={refreshing}
                 className="rounded-full border border-hairline px-3 py-1 text-[13px] font-medium text-text-secondary disabled:opacity-40"
               >
-                {refreshing ? 'Refreshing…' : 'Refresh now'}
+                {refreshing ? t.settings.refreshing : t.settings.refreshNow}
               </button>
             )}
           </div>
@@ -138,13 +141,13 @@ export default function Settings() {
             <>
               <p className="mt-2 text-[12px] text-text-tertiary">
                 {calStatus.last_error
-                  ? `Last sync failed: ${calStatus.last_error}`
+                  ? t.settings.lastSyncFailed(calStatus.last_error)
                   : calStatus.last_synced_at
-                    ? `Last synced ${new Date(calStatus.last_synced_at).toLocaleString()}`
-                    : 'Not synced yet'}
+                    ? t.settings.lastSynced(new Date(calStatus.last_synced_at).toLocaleString(locale))
+                    : t.settings.notSyncedYet}
               </p>
               <button onClick={disconnectICloud} className="mt-3 text-[13px] font-medium text-clay">
-                Disconnect
+                {t.settings.disconnect}
               </button>
             </>
           ) : connecting ? (
@@ -154,14 +157,14 @@ export default function Settings() {
                 autoFocus
                 value={icloudEmail}
                 onChange={(e) => setIcloudEmail(e.target.value)}
-                placeholder="you@icloud.com"
+                placeholder={t.settings.emailPlaceholder}
                 className="rounded-lg border border-hairline bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
               />
               <input
                 type="password"
                 value={icloudPassword}
                 onChange={(e) => setIcloudPassword(e.target.value)}
-                placeholder="app-specific password"
+                placeholder={t.settings.passwordPlaceholder}
                 className="rounded-lg border border-hairline bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
               />
               {connectError && <p className="text-[12px] text-clay">{connectError}</p>}
@@ -171,37 +174,42 @@ export default function Settings() {
                   disabled={!icloudEmail || !icloudPassword || connectSubmitting}
                   className="rounded-full bg-accent px-3 py-1.5 text-[13px] font-semibold text-bg disabled:opacity-40"
                 >
-                  {connectSubmitting ? 'Connecting…' : 'Connect'}
+                  {connectSubmitting ? t.settings.connecting : t.settings.connect}
                 </button>
                 <button onClick={() => setConnecting(false)} className="text-[13px] text-text-tertiary">
-                  Cancel
+                  {t.settings.cancel}
                 </button>
               </div>
               <p className="text-[12px] text-text-tertiary">
-                Generate an app-specific password at{' '}
-                <a href="https://appleid.apple.com" target="_blank" rel="noreferrer" className="text-accent">
-                  appleid.apple.com
-                </a>{' '}
-                — never your main Apple ID password.
+                {(() => {
+                  const [before, after] = t.settings.appSpecificHint('appleid.apple.com').split('appleid.apple.com')
+                  return (
+                    <>
+                      {before}
+                      <a href="https://appleid.apple.com" target="_blank" rel="noreferrer" className="text-accent">
+                        appleid.apple.com
+                      </a>
+                      {after}
+                    </>
+                  )
+                })()}
               </p>
             </div>
           ) : (
             <div className="mt-2 flex items-center justify-between">
-              <p className="text-[12px] text-text-tertiary">Read your existing calendars into Fjord, read-only.</p>
+              <p className="text-[12px] text-text-tertiary">{t.settings.connectHint}</p>
               <button onClick={() => setConnecting(true)} className="text-[13px] font-medium text-accent">
-                Connect
+                {t.settings.connect}
               </button>
             </div>
           )}
         </SettingsSection>
 
-        <SettingsSection title="Publish to Apple Calendar">
-          <p className="mb-3 text-[13px] text-text-secondary">
-            Subscribe to this feed once and Fjord's scheduled tasks show up as their own read-only calendar.
-          </p>
+        <SettingsSection title={t.settings.publishTitle}>
+          <p className="mb-3 text-[13px] text-text-secondary">{t.settings.publishHint}</p>
           <input
             readOnly
-            value={feedUrl ?? 'Loading…'}
+            value={feedUrl ?? '…'}
             onFocus={(e) => e.currentTarget.select()}
             className="w-full rounded-lg border border-hairline bg-bg px-3 py-2 font-mono text-[12px] text-text-secondary outline-none focus:border-accent"
           />
@@ -209,15 +217,12 @@ export default function Settings() {
             onClick={copyFeedUrl}
             className="mt-2 rounded-full bg-accent px-3 py-1.5 text-[13px] font-semibold text-bg"
           >
-            {copied ? 'Copied' : 'Copy link'}
+            {copied ? t.settings.copied : t.settings.copyLink}
           </button>
-          <p className="mt-3 text-[12px] text-text-tertiary">
-            Mac: File → New Calendar Subscription. iPhone: Settings → Calendar → Accounts → Add Account → Other →
-            Add Subscribed Calendar.
-          </p>
+          <p className="mt-3 text-[12px] text-text-tertiary">{t.settings.subscribeSteps}</p>
         </SettingsSection>
 
-        <SettingsSection title="Passcode">
+        <SettingsSection title={t.settings.passcode}>
           {changingPin ? (
             <div className="flex items-center gap-2">
               <input
@@ -226,31 +231,45 @@ export default function Settings() {
                 autoFocus
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="New 4–6 digit passcode"
+                placeholder={t.settings.newPasscodePlaceholder}
                 className="flex-1 rounded-lg border border-hairline bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
               />
               <button onClick={savePin} disabled={newPin.length < 4} className="text-[14px] font-semibold text-accent disabled:opacity-40">
-                Save
+                {t.settings.save}
               </button>
               <button onClick={() => setChangingPin(false)} className="text-[14px] text-text-tertiary">
-                Cancel
+                {t.settings.cancel}
               </button>
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <span className="text-[14px] text-text">{pinSaved ? 'Passcode updated' : 'Change your passcode'}</span>
+              <span className="text-[14px] text-text">{pinSaved ? t.settings.passcodeUpdated : t.settings.changePasscode}</span>
               <button onClick={() => setChangingPin(true)} className="text-[13px] font-medium text-accent">
-                Change
+                {t.settings.change}
               </button>
             </div>
           )}
+        </SettingsSection>
+
+        <SettingsSection title={t.settings.language}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[14px] text-text">{language === 'da' ? 'Dansk' : 'English'}</p>
+              <p className="mt-0.5 text-[12px] text-text-tertiary">{t.settings.languageHint}</p>
+            </div>
+            <Switch
+              checked={language === 'da'}
+              onChange={(checked) => setLanguage(checked ? 'da' : 'en')}
+              label={t.settings.language}
+            />
+          </div>
         </SettingsSection>
 
         <button
           onClick={logout}
           className="rounded-2xl border border-hairline bg-surface px-4 py-3 text-center text-[14px] font-medium text-clay"
         >
-          Log Out
+          {t.settings.logOut}
         </button>
       </div>
     </div>

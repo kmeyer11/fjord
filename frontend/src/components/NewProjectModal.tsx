@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 import { CheckIcon } from './icons'
 import Modal from './Modal'
 
@@ -21,6 +22,7 @@ export default function NewProjectModal({
   onClose: () => void
   onCreate: (data: { name: string; color: string }) => Promise<void>
 }) {
+  const { t } = useLanguage()
   const [name, setName] = useState('')
   const [color, setColor] = useState(PALETTE[0].value)
   const [submitting, setSubmitting] = useState(false)
@@ -42,15 +44,15 @@ export default function NewProjectModal({
       header={
         <>
           <button onClick={onClose} className="text-[15px] text-accent">
-            Cancel
+            {t.newProjectModal.cancel}
           </button>
-          <span className="text-[15px] font-semibold text-text">New Project</span>
+          <span className="text-[15px] font-semibold text-text">{t.newProjectModal.title}</span>
           <button
             onClick={handleSubmit}
             disabled={!name.trim() || submitting}
             className="text-[15px] font-semibold text-accent disabled:opacity-40"
           >
-            Create
+            {t.newProjectModal.create}
           </button>
         </>
       }
@@ -64,20 +66,20 @@ export default function NewProjectModal({
       >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="project-name" className="text-[13px] font-medium text-text-secondary">
-            Name
+            {t.newProjectModal.name}
           </label>
           <input
             id="project-name"
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Homelab build"
+            placeholder={t.newProjectModal.namePlaceholder}
             className="rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[15px] text-text outline-none placeholder:text-text-tertiary focus:border-accent"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-medium text-text-secondary">Color</span>
+          <span className="text-[13px] font-medium text-text-secondary">{t.newProjectModal.color}</span>
           <div className="flex flex-wrap gap-3">
             {PALETTE.map((c) => (
               <button

@@ -3,7 +3,7 @@ import type { ExternalEvent, Task } from '../../api/types'
 import { dateKey } from '../../lib/date'
 import DayColumn from './DayColumn'
 import { HOUR_HEIGHT } from './EventBlocks'
-import { GUTTER_WIDTH } from './WeekHeader'
+import { GUTTER_WIDTH } from './CalendarHeader'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
@@ -19,11 +19,13 @@ export default function CalendarBody({
   tasksByDay,
   externalByDay,
   projectColors,
+  onTaskClick,
 }: {
   days: Date[]
   tasksByDay: Map<string, Task[]>
   externalByDay: Map<string, ExternalEvent[]>
   projectColors: Map<number, string>
+  onTaskClick?: (task: Task) => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -50,6 +52,7 @@ export default function CalendarBody({
               tasks={tasksByDay.get(key) ?? []}
               externalEvents={externalByDay.get(key) ?? []}
               projectColors={projectColors}
+              onTaskClick={onTaskClick}
             />
           )
         })}

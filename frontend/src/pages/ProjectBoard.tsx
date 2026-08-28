@@ -6,20 +6,24 @@ import type { ProjectWithCounts, Task, TaskStatus } from '../api/types'
 import BoardColumn from '../components/BoardColumn'
 import { ChevronLeftIcon } from '../components/icons'
 import NewTaskInline from '../components/NewTaskInline'
-
-const COLUMNS: { status: TaskStatus; title: string }[] = [
-  { status: 'backlog', title: 'Backlog' },
-  { status: 'scheduled', title: 'Scheduled' },
-  { status: 'done', title: 'Done' },
-]
+import TaskDetailModal from '../components/TaskDetailModal'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function ProjectBoard() {
+  const { t } = useLanguage()
   const { projectId } = useParams()
   const id = Number(projectId)
+
+  const COLUMNS: { status: TaskStatus; title: string }[] = [
+    { status: 'backlog', title: t.board.backlog },
+    { status: 'scheduled', title: t.board.scheduled },
+    { status: 'done', title: t.board.done },
+  ]
 
   const [project, setProject] = useState<ProjectWithCounts | null>(null)
   const [tasks, setTasks] = useState<Task[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -54,8 +58,13 @@ export default function ProjectBoard() {
     }
   }
 
-  if (error) return <p className="p-4 text-sm text-clay md:p-8">Couldn't load project: {error}</p>
-  if (!project || !tasks) return <p className="p-4 text-sm text-text-secondary md:p-8">Loading…</p>
+  if (error)
+    return (
+      <p className="p-4 text-sm text-clay md:p-8">
+        {t.board.loadError}: {error}
+      </p>
+    )
+  if (!project || !tasks) return <p className="p-4 text-sm text-text-secondary md:p-8">{t.board.loading}</p>
 
   return (
     <div className="flex h-full flex-col p-4 md:p-8">
@@ -78,6 +87,7 @@ export default function ProjectBoard() {
               status={status}
               title={title}
               tasks={tasks.filter((t) => t.status === status)}
+              onTaskClick={setEditingTask}
               footer={
                 status === 'backlog' ? (
                   <NewTaskInline
@@ -92,6 +102,21 @@ export default function ProjectBoard() {
           ))}
         </div>
       </DndContext>
+
+      {editingTask && (
+        <TaskDetailModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSave={async (data) => {
+            const updated = await api.updateTask(editingTask.id, data)
+            setTasks((prev) => (prev ? prev.map((t) => (t.id === updated.id ? updated : t)) : prev))
+          }}
+          onDelete={async () => {
+            await api.deleteTask(editingTask.id)
+            setTasks((prev) => (prev ? prev.filter((t) => t.id !== editingTask.id) : prev))
+          }}
+        />
+      )}
     </div>
   )
 }

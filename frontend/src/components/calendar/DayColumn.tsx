@@ -40,11 +40,13 @@ export default function DayColumn({
   tasks,
   externalEvents,
   projectColors,
+  onTaskClick,
 }: {
   date: Date
   tasks: Task[]
   externalEvents: ExternalEvent[]
   projectColors: Map<number, string>
+  onTaskClick?: (task: Task) => void
 }) {
   return (
     <div className="relative flex-1 border-l border-hairline first:border-l-0">
@@ -56,7 +58,12 @@ export default function DayColumn({
           <ExternalEventBlock key={e.id} event={e} />
         ))}
         {tasks.map((t) => (
-          <CalendarTaskBlock key={t.id} task={t} color={projectColors.get(t.project_id) ?? '#3c6e90'} />
+          <CalendarTaskBlock
+            key={t.id}
+            task={t}
+            color={projectColors.get(t.project_id) ?? '#3c6e90'}
+            onClick={onTaskClick ? () => onTaskClick(t) : undefined}
+          />
         ))}
         {isSameDay(date, new Date()) && <NowIndicator />}
       </div>

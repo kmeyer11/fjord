@@ -1,4 +1,5 @@
-import { addDays, isSameDay, WEEKDAY_LABELS } from '../../lib/date'
+import { useLanguage } from '../../i18n/LanguageContext'
+import { addDays, isSameDay } from '../../lib/date'
 
 export default function MobileDaySelector({
   weekStart,
@@ -9,6 +10,7 @@ export default function MobileDaySelector({
   selected: Date
   onSelect: (date: Date) => void
 }) {
+  const { t } = useLanguage()
   const today = new Date()
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
@@ -23,7 +25,7 @@ export default function MobileDaySelector({
             onClick={() => onSelect(d)}
             className="flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5"
           >
-            <span className="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{WEEKDAY_LABELS[i]}</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">{t.weekdaysShort[i]}</span>
             <span
               className={[
                 'flex size-7 items-center justify-center rounded-full text-[13px] font-semibold',

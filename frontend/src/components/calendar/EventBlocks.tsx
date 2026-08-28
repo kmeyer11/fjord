@@ -9,7 +9,7 @@ function topFor(date: Date) {
   return (date.getHours() + date.getMinutes() / 60) * HOUR_HEIGHT
 }
 
-export function CalendarTaskBlock({ task, color }: { task: Task; color: string }) {
+export function CalendarTaskBlock({ task, color, onClick }: { task: Task; color: string; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `task-${task.id}`,
     data: { task },
@@ -21,6 +21,7 @@ export function CalendarTaskBlock({ task, color }: { task: Task; color: string }
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={onClick}
       style={{
         top: topFor(new Date(task.due_at)),
         height: BLOCK_HEIGHT,

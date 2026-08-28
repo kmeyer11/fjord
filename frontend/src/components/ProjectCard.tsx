@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import type { ProjectWithCounts } from '../api/types'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function ProjectCard({ project }: { project: ProjectWithCounts }) {
+  const { t } = useLanguage()
   const total = project.task_counts.backlog + project.task_counts.scheduled + project.task_counts.done
 
   return (
@@ -23,12 +25,18 @@ export default function ProjectCard({ project }: { project: ProjectWithCounts })
       </div>
 
       {total === 0 ? (
-        <p className="relative text-[13px] text-text-tertiary">No tasks yet</p>
+        <p className="relative text-[13px] text-text-tertiary">{t.dashboard.noTasksYet}</p>
       ) : (
         <div className="relative flex gap-3.5 text-[13px] text-text-secondary">
-          <span>{project.task_counts.backlog} backlog</span>
-          <span>{project.task_counts.scheduled} scheduled</span>
-          <span>{project.task_counts.done} done</span>
+          <span>
+            {project.task_counts.backlog} {t.dashboard.backlog}
+          </span>
+          <span>
+            {project.task_counts.scheduled} {t.dashboard.scheduled}
+          </span>
+          <span>
+            {project.task_counts.done} {t.dashboard.done}
+          </span>
         </div>
       )}
     </Link>

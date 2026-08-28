@@ -1,12 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useLanguage } from '../i18n/LanguageContext'
 import Logo from './Logo'
 import { CalendarIcon, GearIcon, GridIcon } from './icons'
-
-const navItems = [
-  { to: '/', label: 'Projects', icon: GridIcon, end: true },
-  { to: '/calendar', label: 'Calendar', icon: CalendarIcon, end: false },
-  { to: '/settings', label: 'Settings', icon: GearIcon, end: false },
-]
 
 function sidebarLinkClasses(isActive: boolean) {
   return [
@@ -23,6 +18,13 @@ function tabLinkClasses(isActive: boolean) {
 }
 
 export default function Layout() {
+  const { t } = useLanguage()
+  const navItems = [
+    { to: '/', label: t.nav.projects, icon: GridIcon, end: true },
+    { to: '/calendar', label: t.nav.calendar, icon: CalendarIcon, end: false },
+    { to: '/settings', label: t.nav.settings, icon: GearIcon, end: false },
+  ]
+
   return (
     <div className="flex h-full flex-col md:flex-row">
       <nav className="hidden w-52 shrink-0 flex-col gap-6 border-r border-hairline bg-surface/60 p-4 backdrop-blur-xl md:flex">

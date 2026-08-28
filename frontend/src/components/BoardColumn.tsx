@@ -8,11 +8,13 @@ export default function BoardColumn({
   title,
   tasks,
   footer,
+  onTaskClick,
 }: {
   status: TaskStatus
   title: string
   tasks: Task[]
   footer?: ReactNode
+  onTaskClick?: (task: Task) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
@@ -29,7 +31,7 @@ export default function BoardColumn({
         ].join(' ')}
       >
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} onClick={onTaskClick ? () => onTaskClick(task) : undefined} />
         ))}
         {footer}
       </div>

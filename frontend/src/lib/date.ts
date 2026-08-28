@@ -25,12 +25,29 @@ export function dateKey(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-export function formatWeekRange(start: Date): string {
+export function formatWeekRange(start: Date, locale: string): string {
   const end = addDays(start, 6)
   const sameMonth = start.getMonth() === end.getMonth()
-  const startFmt = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  const endFmt = end.toLocaleDateString(undefined, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })
+  const startFmt = start.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+  const endFmt = end.toLocaleDateString(locale, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })
   return `${startFmt} – ${endFmt}`
 }
 
-export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+/** Every day shown in a month grid — full Monday-start weeks covering the month,
+ * so it includes a few leading/trailing days from adjacent months. */
+export function getMonthGridDays(monthDate: Date): Date[] {
+  const gridStart = startOfWeek(startOfMonth(monthDate))
+  const lastOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
+  const gridEnd = addDays(startOfWeek(lastOfMonth), 6)
+  const days: Date[] = []
+  for (let d = gridStart; d <= gridEnd; d = addDays(d, 1)) days.push(d)
+  return days
+}
+
+export function formatMonth(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
