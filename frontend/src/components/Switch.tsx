@@ -20,8 +20,8 @@ export default function Switch({
     >
       <span
         className={[
-          'absolute top-0.5 size-[22px] rounded-full bg-white shadow transition-transform',
-          checked ? 'translate-x-[20px]' : 'translate-x-0.5',
+          'absolute top-0.5 left-0.5 size-[22px] rounded-full bg-white shadow transition-transform',
+          checked ? 'translate-x-[18px]' : 'translate-x-0',
         ].join(' ')}
       />
     </button>

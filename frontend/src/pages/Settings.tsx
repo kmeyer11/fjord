@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useLanguage } from '../i18n/LanguageContext'
-import Switch from '../components/Switch'
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -24,7 +23,7 @@ type CalendarStatus = {
 }
 
 export default function Settings() {
-  const { t, locale, language, setLanguage } = useLanguage()
+  const { t, locale } = useLanguage()
   const [feedUrl, setFeedUrl] = useState<string | null>(null)
   const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null)
   const [refreshing, setRefreshing] = useState(false)
@@ -249,20 +248,6 @@ export default function Settings() {
               </button>
             </div>
           )}
-        </SettingsSection>
-
-        <SettingsSection title={t.settings.language}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[14px] text-text">{language === 'da' ? 'Dansk' : 'English'}</p>
-              <p className="mt-0.5 text-[12px] text-text-tertiary">{t.settings.languageHint}</p>
-            </div>
-            <Switch
-              checked={language === 'da'}
-              onChange={(checked) => setLanguage(checked ? 'da' : 'en')}
-              label={t.settings.language}
-            />
-          </div>
         </SettingsSection>
 
         <button

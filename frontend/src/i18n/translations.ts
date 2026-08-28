@@ -93,7 +93,6 @@ const en = {
     save: 'Save',
     logOut: 'Log Out',
     language: 'Language',
-    languageHint: 'Switch the app between English and Danish.',
   },
 
   login: {
@@ -196,7 +195,6 @@ const da: typeof en = {
     save: 'Gem',
     logOut: 'Log ud',
     language: 'Sprog',
-    languageHint: 'Skift appen mellem engelsk og dansk.',
   },
 
   login: {
