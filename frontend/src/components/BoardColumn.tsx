@@ -17,15 +17,15 @@ export default function BoardColumn({
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <h2 className="mb-2 px-1 text-sm font-medium text-text-muted">
-        {title} <span className="text-text-muted/60">{tasks.length}</span>
+    <div className="flex min-h-0 flex-1 flex-col md:w-72">
+      <h2 className="mb-2 flex items-center gap-1.5 px-1 text-[13px] font-semibold text-text-secondary">
+        {title} <span className="text-text-tertiary">{tasks.length}</span>
       </h2>
       <div
         ref={setNodeRef}
         className={[
-          'flex min-h-24 flex-1 flex-col gap-2 rounded-xl border border-dashed p-2 transition-colors',
-          isOver ? 'border-accent bg-accent/5' : 'border-border',
+          'flex min-h-24 flex-1 flex-col gap-2 rounded-2xl border p-2 transition-colors',
+          isOver ? 'border-accent/40 bg-accent-soft' : 'border-hairline bg-white/[0.015]',
         ].join(' ')}
       >
         {tasks.map((task) => (

@@ -54,17 +54,20 @@ export default function ProjectBoard() {
     }
   }
 
-  if (error) return <p className="p-4 text-sm text-red-400 md:p-8">Couldn't load project: {error}</p>
-  if (!project || !tasks) return <p className="p-4 text-sm text-text-muted md:p-8">Loading…</p>
+  if (error) return <p className="p-4 text-sm text-clay md:p-8">Couldn't load project: {error}</p>
+  if (!project || !tasks) return <p className="p-4 text-sm text-text-secondary md:p-8">Loading…</p>
 
   return (
     <div className="flex h-full flex-col p-4 md:p-8">
-      <div className="mb-4 flex items-center gap-2">
-        <Link to="/" className="rounded-lg p-1 text-text-muted hover:text-text">
+      <div className="mb-5 flex items-center gap-1.5">
+        <Link to="/" className="-ml-1.5 rounded-full p-1.5 text-accent hover:bg-white/[0.04]">
           <ChevronLeftIcon className="size-5" />
         </Link>
-        <span className="size-2.5 rounded-full" style={{ backgroundColor: project.color }} />
-        <h1 className="text-lg font-semibold text-text">{project.name}</h1>
+        <span
+          className="size-2.5 rounded-full"
+          style={{ backgroundColor: project.color, boxShadow: `0 0 0 4px ${project.color}26` }}
+        />
+        <h1 className="text-[20px] font-bold tracking-tight text-text">{project.name}</h1>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

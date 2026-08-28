@@ -13,7 +13,7 @@ class TaskCounts(BaseModel):
 
 class ProjectBase(BaseModel):
     name: str
-    color: str = "#6366f1"
+    color: str = "#4a7fa5"
     archived: bool = False
 
 

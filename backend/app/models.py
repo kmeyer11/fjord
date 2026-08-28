@@ -24,7 +24,7 @@ class Project(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    color: Mapped[str] = mapped_column(String(7), nullable=False, default="#6366f1")
+    color: Mapped[str] = mapped_column(String(7), nullable=False, default="#4a7fa5")
     archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     tasks: Mapped[list["Task"]] = relationship(

@@ -1,16 +1,35 @@
 @import "tailwindcss";
 
+/*
+  "New Nordic" theme: cool fjord-water blues and misty grays instead of a
+  generic dark-SaaS indigo/black palette, with Apple-style materials
+  (translucent surfaces, hairline separators, tinted selection states)
+  instead of flat cards and heavy borders.
+*/
 @theme {
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
 
-  --color-bg: #0b0e13;
-  --color-surface: #12161d;
-  --color-surface-raised: #171c25;
-  --color-border: #232933;
-  --color-text: #e7eaf0;
-  --color-text-muted: #8b93a1;
-  --color-accent: #6366f1;
+  --color-bg: #0a0f14;
+  --color-surface: #121a21;
+  --color-surface-raised: #19232b;
+  --color-hairline: rgba(233, 241, 245, 0.08);
+  --color-hairline-strong: rgba(233, 241, 245, 0.16);
+  --color-text: #edf2f5;
+  --color-text-secondary: #a6b3bc;
+  --color-text-tertiary: #66727b;
+
+  --color-accent: #4fa3c7;
+  --color-accent-strong: #72bcdc;
+  --color-accent-soft: rgba(79, 163, 199, 0.16);
+
+  /* Nordic project palette — muted, earthy hues rather than saturated SaaS defaults */
+  --color-fjord: #4a7fa5;
+  --color-moss: #6b8f5c;
+  --color-birch: #c99a44;
+  --color-clay: #b25d45;
+  --color-glacier: #3fa6a0;
+  --color-heather: #8b6f9e;
 }
 
 html,
@@ -21,6 +40,10 @@ body,
 
 body {
   background-color: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(79, 163, 199, 0.08), transparent),
+    radial-gradient(ellipse 700px 400px at 100% 0%, rgba(139, 111, 158, 0.05), transparent);
+  background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
@@ -28,5 +51,5 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
+  scrollbar-color: var(--color-hairline-strong) transparent;
 }

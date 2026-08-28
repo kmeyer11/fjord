@@ -26,7 +26,7 @@ export default function NewTaskInline({ onCreate }: { onCreate: (title: string) 
     return (
       <button
         onClick={() => setActive(true)}
-        className="flex items-center gap-1.5 rounded-lg p-2 text-left text-sm text-text-muted hover:bg-surface-raised hover:text-text"
+        className="flex items-center gap-1.5 rounded-xl p-2 text-left text-[13px] font-medium text-text-tertiary hover:bg-white/[0.04] hover:text-text-secondary"
       >
         <PlusIcon className="size-4" />
         Add task
@@ -49,7 +49,7 @@ export default function NewTaskInline({ onCreate }: { onCreate: (title: string) 
         }
       }}
       placeholder="Task title"
-      className="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text outline-none focus:border-text-muted"
+      className="rounded-xl border border-hairline bg-surface-raised px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
     />
   )
 }

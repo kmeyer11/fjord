@@ -1,7 +1,18 @@
 import { useState } from 'react'
+import { CheckIcon } from './icons'
 import Modal from './Modal'
 
-const PRESET_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
+// Mirrors the --color-fjord/glacier/moss/birch/clay/heather tokens in index.css.
+// Stored as literal hex (rather than a var() reference) so the color travels
+// intact outside the app shell — the .ics feed and any future clients.
+const PALETTE = [
+  { name: 'Fjord', value: '#4a7fa5' },
+  { name: 'Glacier', value: '#3fa6a0' },
+  { name: 'Moss', value: '#6b8f5c' },
+  { name: 'Birch', value: '#c99a44' },
+  { name: 'Clay', value: '#b25d45' },
+  { name: 'Heather', value: '#8b6f9e' },
+]
 
 export default function NewProjectModal({
   onClose,
@@ -11,12 +22,11 @@ export default function NewProjectModal({
   onCreate: (data: { name: string; color: string }) => Promise<void>
 }) {
   const [name, setName] = useState('')
-  const [color, setColor] = useState(PRESET_COLORS[0])
+  const [color, setColor] = useState(PALETTE[0].value)
   const [submitting, setSubmitting] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
+  async function handleSubmit() {
+    if (!name.trim() || submitting) return
     setSubmitting(true)
     try {
       await onCreate({ name: name.trim(), color })
@@ -27,10 +37,33 @@ export default function NewProjectModal({
   }
 
   return (
-    <Modal title="New project" onClose={onClose}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Modal
+      onClose={onClose}
+      header={
+        <>
+          <button onClick={onClose} className="text-[15px] text-accent">
+            Cancel
+          </button>
+          <span className="text-[15px] font-semibold text-text">New Project</span>
+          <button
+            onClick={handleSubmit}
+            disabled={!name.trim() || submitting}
+            className="text-[15px] font-semibold text-accent disabled:opacity-40"
+          >
+            Create
+          </button>
+        </>
+      }
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          handleSubmit()
+        }}
+        className="flex flex-col gap-5"
+      >
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="project-name" className="text-sm text-text-muted">
+          <label htmlFor="project-name" className="text-[13px] font-medium text-text-secondary">
             Name
           </label>
           <input
@@ -39,41 +72,26 @@ export default function NewProjectModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Homelab build"
-            className="rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none focus:border-text-muted"
+            className="rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[15px] text-text outline-none placeholder:text-text-tertiary focus:border-accent"
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm text-text-muted">Color</span>
-          <div className="flex gap-2">
-            {PRESET_COLORS.map((c) => (
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-medium text-text-secondary">Color</span>
+          <div className="flex flex-wrap gap-3">
+            {PALETTE.map((c) => (
               <button
-                key={c}
+                key={c.name}
                 type="button"
-                onClick={() => setColor(c)}
-                aria-label={c}
-                className="size-7 rounded-full ring-offset-2 ring-offset-surface-raised transition-shadow"
-                style={{ backgroundColor: c, boxShadow: color === c ? `0 0 0 2px ${c}` : undefined }}
-              />
+                onClick={() => setColor(c.value)}
+                aria-label={c.name}
+                className="flex size-8 items-center justify-center rounded-full transition-transform active:scale-90"
+                style={{ backgroundColor: c.value }}
+              >
+                {color === c.value && <CheckIcon className="size-4 text-bg" />}
+              </button>
             ))}
           </div>
-        </div>
-
-        <div className="mt-2 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-2 text-sm text-text-muted hover:text-text"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!name.trim() || submitting}
-            className="rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            Create
-          </button>
         </div>
       </form>
     </Modal>

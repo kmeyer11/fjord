@@ -20,28 +20,30 @@ export default function Dashboard() {
   useEffect(reload, [])
 
   return (
-    <div className="mx-auto max-w-5xl p-4 md:p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-text">Projects</h1>
+    <div className="mx-auto max-w-5xl px-4 pb-8 pt-6 md:px-8 md:pt-10">
+      <div className="mb-7 flex items-center justify-between">
+        <h1 className="text-[28px] font-bold tracking-tight text-text md:text-[32px]">Projects</h1>
         <button
           onClick={() => setShowNewProject(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white"
+          className="flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-2 text-[13px] font-semibold text-bg transition-opacity active:opacity-80"
         >
           <PlusIcon className="size-4" />
-          New project
+          New Project
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-400">Couldn't load projects: {error}</p>}
+      {error && <p className="text-sm text-clay">Couldn't load projects: {error}</p>}
 
-      {!error && !projects && <p className="text-sm text-text-muted">Loading…</p>}
+      {!error && !projects && <p className="text-sm text-text-secondary">Loading…</p>}
 
       {projects && projects.length === 0 && (
-        <p className="text-sm text-text-muted">No projects yet. Create your first one above.</p>
+        <div className="rounded-2xl border border-dashed border-hairline-strong px-6 py-14 text-center">
+          <p className="text-sm text-text-secondary">No projects yet — create your first one to start a backlog.</p>
+        </div>
       )}
 
       {projects && projects.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => (
             <ProjectCard key={p.id} project={p} />
           ))}
