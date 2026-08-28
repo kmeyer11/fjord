@@ -5,11 +5,12 @@ from fastapi.staticfiles import StaticFiles
 
 from app import auth
 from app.config import settings
-from app.database import Base, engine
 from app.routers import auth as auth_router
 from app.routers import calendar, ics_feed, projects, tasks
 
-Base.metadata.create_all(bind=engine)
+# Schema creation/changes are Alembic's job (see backend/alembic/), not
+# main.py's — run `alembic upgrade head` before starting the server (the
+# Docker image's CMD does this automatically).
 
 app = FastAPI(title="Fjord")
 

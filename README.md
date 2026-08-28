@@ -27,11 +27,34 @@ complete feature list and build order. Short version:
 cd backend
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+.venv/bin/alembic upgrade head
 .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+`alembic upgrade head` creates/updates `fjord.db` to match the current schema
+(see `backend/alembic/`) — run it again after pulling changes that touch
+`backend/app/models.py`. The Docker image runs this automatically on
+startup.
+
 Binds to `0.0.0.0` by default so it's reachable from other devices on your
 local network at `http://<your-ip>:8000`, per the project's phone-access goal.
+
+#### Changing the database schema
+
+Edit `backend/app/models.py`, then generate a migration instead of hand-writing
+SQL:
+
+```bash
+cd backend
+.venv/bin/alembic revision --autogenerate -m "add whatever"
+```
+
+Review the generated file in `backend/alembic/versions/` before running it
+(autogenerate is good but not infallible — it won't notice a plain column
+rename, for example, and will generate a drop+add instead) — then apply it
+with `alembic upgrade head`. Commit the migration file alongside the model
+change so `docker compose up --build` picks it up automatically on deploy
+(the image's `CMD` runs `alembic upgrade head` before starting the server).
 
 ### Frontend (development)
 
@@ -144,6 +167,7 @@ backend/
     secrets_store.py      Fernet encryption for the iCloud app password
     caldav_client.py     Read-only iCloud CalDAV polling (with cache)
     routers/             API route handlers (projects, tasks, calendar, auth, ics feed)
+  alembic/              Schema migrations (see "Changing the database schema" above)
   requirements.txt
 frontend/
   src/
