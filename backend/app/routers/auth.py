@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, field_validator
-from sqlalchemy.orm import Session
 
-from app import auth
-from app.database import get_db
+from app import auth, config_store
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -20,25 +18,25 @@ class PinPayload(BaseModel):
 
 
 @router.get("/status")
-def status(request: Request, db: Session = Depends(get_db)):
-    config = auth.get_or_create_config(db)
+def status(request: Request):
+    app_secrets = config_store.load()
     return {
-        "pin_set": config.pin_hash is not None,
-        "authenticated": auth.is_authenticated(request, config),
+        "pin_set": app_secrets.pin_hash is not None,
+        "authenticated": auth.is_authenticated(request, app_secrets),
     }
 
 
 @router.post("/login")
-def login(payload: PinPayload, response: Response, db: Session = Depends(get_db)):
-    config = auth.get_or_create_config(db)
+def login(payload: PinPayload, response: Response):
+    app_secrets = config_store.load()
 
-    if config.pin_hash is None:
-        config.pin_hash = auth.hash_pin(payload.pin)
-        db.commit()
-    elif not auth.verify_pin(payload.pin, config.pin_hash):
+    if app_secrets.pin_hash is None:
+        app_secrets.pin_hash = auth.hash_pin(payload.pin)
+        config_store.save(app_secrets)
+    elif not auth.verify_pin(payload.pin, app_secrets.pin_hash):
         raise HTTPException(status_code=401, detail="Incorrect PIN")
 
-    token = auth.make_session_token(config.secret_key)
+    token = auth.make_session_token(app_secrets.session_secret)
     response.set_cookie(
         auth.SESSION_COOKIE,
         token,
@@ -56,14 +54,13 @@ def logout(response: Response):
 
 
 @router.get("/feed-token", dependencies=[Depends(auth.require_session)])
-def feed_token(db: Session = Depends(get_db)):
-    config = auth.get_or_create_config(db)
-    return {"token": config.ics_token}
+def feed_token():
+    return {"token": config_store.load().ics_token}
 
 
 @router.post("/change-pin", dependencies=[Depends(auth.require_session)])
-def change_pin(payload: PinPayload, db: Session = Depends(get_db)):
-    config = auth.get_or_create_config(db)
-    config.pin_hash = auth.hash_pin(payload.pin)
-    db.commit()
+def change_pin(payload: PinPayload):
+    app_secrets = config_store.load()
+    app_secrets.pin_hash = auth.hash_pin(payload.pin)
+    config_store.save(app_secrets)
     return {"ok": True}

@@ -4,9 +4,9 @@ CalDAV has no push/webhook, so results are cached briefly and re-fetched on
 the next request past the TTL — this is the "poll periodically / on-demand
 refresh" behavior the spec calls for, without needing a background scheduler.
 
-Credentials come from the database (set via the Settings page, app password
-encrypted — see app.secrets_store) if present, else from environment
-variables (see app.config) for headless/automated deployment.
+Credentials come from the local secrets store (set via the Settings page,
+app password encrypted — see app.secrets_store) if present, else from
+environment variables (see app.config) for headless/automated deployment.
 """
 
 import logging
@@ -14,11 +14,9 @@ import time
 from datetime import date, datetime
 
 import caldav
-from sqlalchemy.orm import Session
 
-from app import secrets_store
+from app import config_store, secrets_store
 from app.config import settings
-from app.models import AppConfig
 
 logger = logging.getLogger(__name__)
 
@@ -28,23 +26,23 @@ _last_error: str | None = None
 _last_synced_at: datetime | None = None
 
 
-def get_credentials(db: Session) -> tuple[str, str] | None:
-    config = db.get(AppConfig, 1)
-    if config and config.icloud_username and config.icloud_app_password_enc:
-        password = secrets_store.decrypt(config.icloud_app_password_enc)
+def get_credentials() -> tuple[str, str] | None:
+    app_secrets = config_store.load()
+    if app_secrets.icloud_username and app_secrets.icloud_app_password_enc:
+        password = secrets_store.decrypt(app_secrets.icloud_app_password_enc)
         if password is not None:
-            return config.icloud_username, password
+            return app_secrets.icloud_username, password
     if settings.icloud_username and settings.icloud_app_password:
         return settings.icloud_username, settings.icloud_app_password
     return None
 
 
-def is_configured(db: Session) -> bool:
-    return get_credentials(db) is not None
+def is_configured() -> bool:
+    return get_credentials() is not None
 
 
-def sync_status(db: Session) -> dict:
-    creds = get_credentials(db)
+def sync_status() -> dict:
+    creds = get_credentials()
     return {
         "configured": creds is not None,
         "icloud_username": creds[0] if creds else None,
@@ -64,10 +62,10 @@ def test_connection(username: str, password: str) -> str | None:
         return str(exc)
 
 
-def fetch_events(db: Session, start: datetime, end: datetime, force: bool = False) -> list[dict]:
+def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[dict]:
     global _last_error, _last_synced_at
 
-    creds = get_credentials(db)
+    creds = get_credentials()
     if creds is None:
         return []
     username, password = creds

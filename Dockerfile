@@ -16,10 +16,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./
 COPY --from=frontend /app/frontend/dist /app/frontend/dist
 
-# SQLite data and the credentials encryption key live outside the app
-# directory so they survive image rebuilds — mount a volume at /data (see
-# docker-compose.yml).
+# SQLite data, the security-state file, and the credentials encryption key
+# all live outside the app directory so they survive image rebuilds — mount
+# a volume at /data (see docker-compose.yml).
 ENV FJORD_DATABASE_URL=sqlite:////data/fjord.db
+ENV FJORD_SECRETS_PATH=/data/secrets.json
 ENV FJORD_CREDENTIALS_KEY_PATH=/data/credentials.key
 VOLUME /data
 

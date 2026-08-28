@@ -52,18 +52,3 @@ class Task(Base):
     )
 
     project: Mapped["Project"] = relationship(back_populates="tasks")
-
-
-class AppConfig(Base):
-    """Singleton row (id is always 1) holding the PIN gate, .ics feed secret,
-    and iCloud CalDAV credentials (app password stored encrypted — see
-    app.secrets_store)."""
-
-    __tablename__ = "app_config"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    pin_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    secret_key: Mapped[str] = mapped_column(String(64), nullable=False)
-    ics_token: Mapped[str] = mapped_column(String(64), nullable=False)
-    icloud_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    icloud_app_password_enc: Mapped[str | None] = mapped_column(String(512), nullable=True)

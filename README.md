@@ -95,21 +95,34 @@ config; its subscribe URL is on the Settings page once you're logged in.
 
 #### How credentials are stored
 
-The app password is encrypted (`cryptography`'s Fernet) before it's written
-to the database. The encryption key lives in its own file —
-`backend/.fjord_credentials.key` locally, `/data/credentials.key` in Docker —
-separate from the database file and never committed to git. This means a
-copy of the database alone (a backup, an accidental `git add`) doesn't carry
-what's needed to decrypt the password; both files are needed together. It's
-not a claim of perfect security — anyone with full access to the running
-machine can still get it, same as any locally-stored secret — but it's real
-protection against casual exposure, consistent with this app's PIN gate
-being "keep out casual snoopers," not bank-grade.
+`fjord.db` holds only your projects and tasks — nothing security-sensitive
+lives there. The PIN hash, session-signing secret, `.ics` feed token, and
+iCloud credentials all live in a separate local file instead
+(`backend/.fjord_secrets.json`, `chmod 600`, gitignored — `/data/secrets.json`
+in Docker). That way a copy of your database (a backup, an accidental
+`git add`, exporting your data to move it) never carries what's needed to
+forge a login session or read your calendar credentials — see
+`app/config_store.py`.
 
-If you ever need to move the database to a new machine, take the key file
-with it (`backend/.fjord_credentials.key` or the Docker volume it lives on)
-or the stored iCloud credentials won't decrypt — you'd just reconnect from
-Settings.
+The iCloud app password gets an extra step on top: it's encrypted
+(`cryptography`'s Fernet) before it's written even to that secrets file, with
+the encryption key in a *third*, separate local file
+(`backend/.fjord_credentials.key`, `/data/credentials.key` in Docker) — see
+`app/secrets_store.py`. So the secrets file and the key file would both need
+to leak together to recover the password.
+
+None of this is a claim of perfect security — anyone with full access to the
+running machine still gets everything, same as any locally-stored secret on
+any software. What it does buy is real protection against the realistic
+failure mode: a copy of one file (a DB backup, a data export) ending up
+somewhere it shouldn't, without also leaking what's needed to impersonate you
+or read your calendar. Consistent with this app's PIN gate itself being
+"keep out casual snoopers," not bank-grade.
+
+If you ever move to a new machine, take `.fjord_secrets.json` and
+`.fjord_credentials.key` with the database (or the Docker volume holding all
+three) — otherwise you'll just need to set a new PIN and reconnect iCloud
+from Settings, which is harmless, just an inconvenience.
 
 ### First run / PIN
 
@@ -123,10 +136,12 @@ backend/
   app/
     main.py           FastAPI app, static frontend serving, router wiring
     config.py          Settings (DB path, host/port, iCloud CalDAV creds)
-    database.py         SQLAlchemy engine/session
-    models.py           Project, Task, AppConfig ORM models
+    database.py         SQLAlchemy engine/session (projects/tasks only)
+    models.py           Project, Task ORM models
     schemas.py           Pydantic request/response schemas
     auth.py              PIN hashing + signed session cookies
+    config_store.py      Local file store for PIN hash, session secret, iCloud creds, feed token
+    secrets_store.py      Fernet encryption for the iCloud app password
     caldav_client.py     Read-only iCloud CalDAV polling (with cache)
     routers/             API route handlers (projects, tasks, calendar, auth, ics feed)
   requirements.txt

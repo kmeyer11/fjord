@@ -5,7 +5,7 @@ from fastapi.responses import Response
 from icalendar import Calendar, Event
 from sqlalchemy.orm import Session
 
-from app import auth, models
+from app import config_store, models
 from app.database import get_db
 
 router = APIRouter(tags=["ics-feed"])
@@ -18,8 +18,7 @@ _EVENT_DURATION = timedelta(minutes=30)
 
 @router.get("/calendar/fjord.ics")
 def fjord_ics_feed(token: str, db: Session = Depends(get_db)):
-    config = auth.get_or_create_config(db)
-    if token != config.ics_token:
+    if token != config_store.load().ics_token:
         raise HTTPException(status_code=403, detail="Invalid feed token")
 
     cal = Calendar()
