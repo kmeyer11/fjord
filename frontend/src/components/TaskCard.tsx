@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../api/types'
 
 const PRIORITY_STYLES: Record<Task['priority'], string> = {
-  low: 'text-text-tertiary bg-white/[0.05]',
+  low: 'text-text-tertiary bg-black/[0.04]',
   medium: 'text-birch bg-birch/15',
   high: 'text-clay bg-clay/15',
 }

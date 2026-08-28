@@ -6,12 +6,12 @@ import Modal from './Modal'
 // Stored as literal hex (rather than a var() reference) so the color travels
 // intact outside the app shell — the .ics feed and any future clients.
 const PALETTE = [
-  { name: 'Fjord', value: '#4a7fa5' },
-  { name: 'Glacier', value: '#3fa6a0' },
-  { name: 'Moss', value: '#6b8f5c' },
-  { name: 'Birch', value: '#c99a44' },
-  { name: 'Clay', value: '#b25d45' },
-  { name: 'Heather', value: '#8b6f9e' },
+  { name: 'Fjord', value: '#3c6e90' },
+  { name: 'Glacier', value: '#2f8f89' },
+  { name: 'Moss', value: '#57784a' },
+  { name: 'Birch', value: '#a97e2e' },
+  { name: 'Clay', value: '#9c4a34' },
+  { name: 'Heather', value: '#75587f' },
 ]
 
 export default function NewProjectModal({

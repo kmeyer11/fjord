@@ -26,7 +26,7 @@ export default function NewTaskInline({ onCreate }: { onCreate: (title: string) 
     return (
       <button
         onClick={() => setActive(true)}
-        className="flex items-center gap-1.5 rounded-xl p-2 text-left text-[13px] font-medium text-text-tertiary hover:bg-white/[0.04] hover:text-text-secondary"
+        className="flex items-center gap-1.5 rounded-xl p-2 text-left text-[13px] font-medium text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
       >
         <PlusIcon className="size-4" />
         Add task

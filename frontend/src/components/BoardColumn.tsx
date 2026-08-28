@@ -25,7 +25,7 @@ export default function BoardColumn({
         ref={setNodeRef}
         className={[
           'flex min-h-24 flex-1 flex-col gap-2 rounded-2xl border p-2 transition-colors',
-          isOver ? 'border-accent/40 bg-accent-soft' : 'border-hairline bg-white/[0.015]',
+          isOver ? 'border-accent/40 bg-accent-soft' : 'border-hairline bg-black/[0.02]',
         ].join(' ')}
       >
         {tasks.map((task) => (

@@ -60,7 +60,7 @@ export default function ProjectBoard() {
   return (
     <div className="flex h-full flex-col p-4 md:p-8">
       <div className="mb-5 flex items-center gap-1.5">
-        <Link to="/" className="-ml-1.5 rounded-full p-1.5 text-accent hover:bg-white/[0.04]">
+        <Link to="/" className="-ml-1.5 rounded-full p-1.5 text-accent hover:bg-black/[0.04]">
           <ChevronLeftIcon className="size-5" />
         </Link>
         <span

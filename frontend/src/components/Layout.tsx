@@ -10,7 +10,7 @@ const navItems = [
 function sidebarLinkClasses(isActive: boolean) {
   return [
     'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors',
-    isActive ? 'bg-accent-soft text-accent-strong' : 'text-text-secondary hover:bg-white/[0.04] hover:text-text',
+    isActive ? 'bg-accent-soft text-accent-strong' : 'text-text-secondary hover:bg-black/[0.04] hover:text-text',
   ].join(' ')
 }
 
