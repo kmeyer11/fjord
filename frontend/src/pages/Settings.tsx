@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
 import { useLanguage } from '../i18n/LanguageContext'
 
@@ -28,6 +28,7 @@ export default function Settings() {
   const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const feedUrlInputRef = useRef<HTMLInputElement>(null)
 
   const [connecting, setConnecting] = useState(false)
   const [icloudEmail, setIcloudEmail] = useState('')
@@ -68,11 +69,30 @@ export default function Settings() {
   async function copyFeedUrl() {
     if (!feedUrl) return
     try {
+      // navigator.clipboard needs a secure context (https, or the browser's own
+      // localhost) — this app is meant to be opened over plain http from a phone
+      // on the LAN (see FJORD_HOST default), which is *not* secure, so this API
+      // is routinely unavailable there and throws/rejects.
       await navigator.clipboard.writeText(feedUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch {
-      // clipboard API needs a secure context; the input below is selectable regardless
+      // Fall back to the legacy selection-based copy, which works without the
+      // Clipboard API's secure-context requirement.
+      const input = feedUrlInputRef.current
+      if (input) {
+        input.focus()
+        input.select()
+        try {
+          if (document.execCommand('copy')) {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1500)
+          }
+        } catch {
+          // Both copy paths failed — the input is still focused and selected
+          // so the user can copy it manually.
+        }
+      }
     }
   }
 
@@ -207,6 +227,7 @@ export default function Settings() {
         <SettingsSection title={t.settings.publishTitle}>
           <p className="mb-3 text-[13px] text-text-secondary">{t.settings.publishHint}</p>
           <input
+            ref={feedUrlInputRef}
             readOnly
             value={feedUrl ?? '…'}
             onFocus={(e) => e.currentTarget.select()}
