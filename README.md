@@ -123,6 +123,19 @@ below) — Compose picks those up automatically. This is the intended path for
 running Fjord on the homelab server: point a reverse proxy (Caddy, Traefik,
 etc.) at this container rather than exposing port 8000 directly.
 
+#### Deploying updates
+
+Once a change is merged to `main`, on the machine running the container:
+
+```bash
+git checkout main && git pull
+docker compose up --build -d
+```
+
+Rebuilds the image with the latest code and restarts the container. No
+separate migration step needed — the image's `CMD` runs `alembic upgrade
+head` automatically before the server starts.
+
 ### Apple Calendar sync (optional)
 
 Inbound sync (reading your existing calendars) needs an iCloud app-specific
