@@ -7,6 +7,7 @@ import CalendarBody from '../components/calendar/CalendarBody'
 import CalendarHeader, { type CalendarViewMode } from '../components/calendar/CalendarHeader'
 import MobileDaySelector from '../components/calendar/MobileDaySelector'
 import MonthGrid from '../components/calendar/MonthGrid'
+import ExternalEventDetailModal from '../components/ExternalEventDetailModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
 import {
@@ -22,7 +23,7 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 
 export default function Calendar() {
   const { t, locale } = useLanguage()
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('week')
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('month')
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [monthDate, setMonthDate] = useState(() => startOfMonth(new Date()))
@@ -32,6 +33,7 @@ export default function Calendar() {
   const [externalEvents, setExternalEvents] = useState<ExternalEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [viewingExternalEvent, setViewingExternalEvent] = useState<ExternalEvent | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -73,13 +75,6 @@ export default function Calendar() {
 
   function goToMonth(newMonth: Date) {
     setMonthDate(startOfMonth(newMonth))
-  }
-
-  function goToday() {
-    const today = new Date()
-    setWeekStart(startOfWeek(today))
-    setSelectedDate(today)
-    setMonthDate(startOfMonth(today))
   }
 
   const projectColors = new Map(projects.map((p) => [p.id, p.color]))
@@ -159,7 +154,6 @@ export default function Calendar() {
             onViewModeChange={setViewMode}
             onPrev={() => (viewMode === 'week' ? goToWeek(addDays(weekStart, -7)) : goToMonth(addDays(monthDate, -1)))}
             onNext={() => (viewMode === 'week' ? goToWeek(addDays(weekStart, 7)) : goToMonth(addDays(monthDate, 32)))}
-            onToday={goToday}
           />
           {viewMode === 'week' && (
             <MobileDaySelector weekStart={weekStart} selected={selectedDate} onSelect={setSelectedDate} />
@@ -171,6 +165,7 @@ export default function Calendar() {
               externalByDay={externalByDay}
               projectColors={projectColors}
               onTaskClick={setEditingTask}
+              onExternalEventClick={setViewingExternalEvent}
             />
           ) : (
             <MonthGrid
@@ -179,6 +174,7 @@ export default function Calendar() {
               externalByDay={externalByDay}
               projectColors={projectColors}
               onTaskClick={setEditingTask}
+              onExternalEventClick={setViewingExternalEvent}
             />
           )}
         </div>
@@ -207,6 +203,10 @@ export default function Calendar() {
             setTasks((prev) => prev.filter((t) => t.id !== editingTask.id))
           }}
         />
+      )}
+
+      {viewingExternalEvent && (
+        <ExternalEventDetailModal event={viewingExternalEvent} onClose={() => setViewingExternalEvent(null)} />
       )}
     </DndContext>
   )

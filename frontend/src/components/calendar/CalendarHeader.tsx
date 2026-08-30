@@ -38,7 +38,6 @@ export default function CalendarHeader({
   onViewModeChange,
   onPrev,
   onNext,
-  onToday,
 }: {
   label: string
   weekStart: Date
@@ -46,7 +45,6 @@ export default function CalendarHeader({
   onViewModeChange: (mode: CalendarViewMode) => void
   onPrev: () => void
   onNext: () => void
-  onToday: () => void
 }) {
   const { t } = useLanguage()
   const today = new Date()
@@ -66,12 +64,6 @@ export default function CalendarHeader({
         </div>
         <div className="flex items-center gap-2">
           <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
-          <button
-            onClick={onToday}
-            className="rounded-full border border-hairline px-3 py-1 text-[13px] font-medium text-text-secondary hover:bg-black/[0.04]"
-          >
-            {t.calendar.today}
-          </button>
         </div>
       </div>
 

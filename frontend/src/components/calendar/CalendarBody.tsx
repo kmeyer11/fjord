@@ -20,12 +20,14 @@ export default function CalendarBody({
   externalByDay,
   projectColors,
   onTaskClick,
+  onExternalEventClick,
 }: {
   days: Date[]
   tasksByDay: Map<string, Task[]>
   externalByDay: Map<string, ExternalEvent[]>
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
+  onExternalEventClick?: (event: ExternalEvent) => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -53,6 +55,7 @@ export default function CalendarBody({
               externalEvents={externalByDay.get(key) ?? []}
               projectColors={projectColors}
               onTaskClick={onTaskClick}
+              onExternalEventClick={onExternalEventClick}
             />
           )
         })}

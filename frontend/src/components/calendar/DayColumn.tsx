@@ -42,12 +42,14 @@ export default function DayColumn({
   externalEvents,
   projectColors,
   onTaskClick,
+  onExternalEventClick,
 }: {
   date: Date
   tasks: Task[]
   externalEvents: ExternalEvent[]
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
+  onExternalEventClick?: (event: ExternalEvent) => void
 }) {
   return (
     <div className="relative flex-1 border-l border-hairline first:border-l-0">
@@ -56,7 +58,11 @@ export default function DayColumn({
       ))}
       <div className="pointer-events-none absolute inset-0">
         {externalEvents.map((e) => (
-          <ExternalEventBlock key={e.id} event={e} />
+          <ExternalEventBlock
+            key={e.id}
+            event={e}
+            onClick={onExternalEventClick ? () => onExternalEventClick(e) : undefined}
+          />
         ))}
         {tasks.map((t) => (
           <CalendarTaskBlock

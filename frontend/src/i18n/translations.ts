@@ -50,7 +50,6 @@ const en = {
   calendar: {
     week: 'Week',
     month: 'Month',
-    today: 'Today',
     previous: 'Previous',
     next: 'Next',
     backlog: 'Backlog',
@@ -62,6 +61,14 @@ const en = {
     nothingUnscheduled: 'Nothing unscheduled — drag a task here to unschedule it.',
     moreCount: (n: number) => `+${n} more`,
     loadError: 'Something went wrong loading the calendar',
+  },
+
+  externalEventModal: {
+    close: 'Close',
+    readOnly: 'Read-only',
+    location: 'Location',
+    description: 'Description',
+    allDay: 'All day',
   },
 
   weekdaysShort: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -156,7 +163,6 @@ const da: typeof en = {
   calendar: {
     week: 'Uge',
     month: 'Måned',
-    today: 'I dag',
     previous: 'Forrige',
     next: 'Næste',
     backlog: 'Backlog',
@@ -168,6 +174,14 @@ const da: typeof en = {
     nothingUnscheduled: 'Intet uplanlagt — træk en opgave hertil for at fjerne den fra kalenderen.',
     moreCount: (n: number) => `+${n} mere`,
     loadError: 'Der gik noget galt under indlæsning af kalenderen',
+  },
+
+  externalEventModal: {
+    close: 'Luk',
+    readOnly: 'Skrivebeskyttet',
+    location: 'Sted',
+    description: 'Beskrivelse',
+    allDay: 'Hele dagen',
   },
 
   weekdaysShort: ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'],
