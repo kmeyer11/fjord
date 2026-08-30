@@ -1,10 +1,32 @@
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Literal
+from zoneinfo import ZoneInfo
+
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.config import settings
 from app.database import get_db
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+
+# How far ahead a recurring series is kept populated with real Task rows. Chosen
+# to comfortably cover the calendar's month view (never more than ~6 weeks
+# visible) with headroom, while keeping the series' row count bounded.
+_RECURRENCE_HORIZON = timedelta(weeks=12)
+
+_LOCAL_TZ = ZoneInfo(settings.local_timezone)
+
+
+def _next_week(value: datetime) -> datetime:
+    """Steps one week ahead in local wall-clock time, not absolute UTC time —
+    so "every Tuesday at 10" stays at 10 local across a DST change instead of
+    drifting an hour."""
+    local = (value.astimezone(_LOCAL_TZ) + timedelta(weeks=1)).astimezone(timezone.utc)
+    return local
 
 
 def _get_task_or_404(task_id: int, db: Session) -> models.Task:
@@ -14,10 +36,73 @@ def _get_task_or_404(task_id: int, db: Session) -> models.Task:
     return task
 
 
+def _generate_following_occurrences(
+    db: Session, template: models.Task, recurrence_id: str, horizon: datetime
+) -> None:
+    """Adds weekly occurrences after template.due_at (exclusive) up to horizon,
+    cloning template's title/description/criticality/all_day."""
+    next_due_at = _next_week(template.due_at)
+    while next_due_at <= horizon:
+        db.add(
+            models.Task(
+                project_id=None,
+                title=template.title,
+                description=template.description,
+                category=models.TaskCategory.meeting,
+                status=models.TaskStatus.scheduled,
+                criticality=template.criticality,
+                due_at=next_due_at,
+                all_day=template.all_day,
+                recurrence_id=recurrence_id,
+            )
+        )
+        next_due_at = _next_week(next_due_at)
+
+
+def _stop_series(db: Session, recurrence_id: str) -> None:
+    """Detaches every remaining row of a series from recurrence_id. Needed
+    whenever a series is shortened (future occurrences dropped) — otherwise
+    _extend_recurring_series would just see the remaining earlier occurrences
+    and regenerate the dropped ones right back on the next read."""
+    db.query(models.Task).filter(models.Task.recurrence_id == recurrence_id).update(
+        {"recurrence_id": None}, synchronize_session=False
+    )
+
+
+def _extend_recurring_series(db: Session) -> None:
+    """Tops up every recurring series so it has occurrences generated out to
+    the horizon. CalDAV has no push either (see caldav_client), so both use
+    the same trick: extend lazily on the next read rather than needing a
+    background scheduler."""
+    horizon = datetime.now(timezone.utc) + _RECURRENCE_HORIZON
+    series = (
+        db.query(models.Task.recurrence_id, func.max(models.Task.due_at))
+        .filter(models.Task.recurrence_id.isnot(None))
+        .group_by(models.Task.recurrence_id)
+        .all()
+    )
+    dirty = False
+    for recurrence_id, latest_due_at in series:
+        if latest_due_at is None or latest_due_at >= horizon:
+            continue
+        template = (
+            db.query(models.Task)
+            .filter(models.Task.recurrence_id == recurrence_id, models.Task.due_at == latest_due_at)
+            .first()
+        )
+        if template is None:
+            continue
+        _generate_following_occurrences(db, template, recurrence_id, horizon)
+        dirty = True
+    if dirty:
+        db.commit()
+
+
 @router.get("", response_model=list[schemas.Task])
 def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(get_db)):
     """All tasks across every project — the calendar view and its backlog panel
     need a cross-project list, unlike the per-project listing under /api/projects."""
+    _extend_recurring_series(db)
     query = db.query(models.Task)
     if status is not None:
         query = query.filter(models.Task.status == status)
@@ -28,6 +113,7 @@ def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(ge
 def create_meeting(payload: schemas.MeetingCreate, db: Session = Depends(get_db)):
     """Meetings are project-less tasks, so unlike regular tasks (created via
     POST /api/projects/{project_id}/tasks) they get a standalone route here."""
+    recurrence_id = str(uuid.uuid4()) if payload.recurring else None
     task = models.Task(
         project_id=None,
         title=payload.title,
@@ -36,8 +122,15 @@ def create_meeting(payload: schemas.MeetingCreate, db: Session = Depends(get_db)
         status=models.TaskStatus.scheduled,
         criticality=3,
         due_at=payload.due_at,
+        all_day=payload.all_day,
+        recurrence_id=recurrence_id,
     )
     db.add(task)
+
+    if recurrence_id is not None:
+        horizon = datetime.now(timezone.utc) + _RECURRENCE_HORIZON
+        _generate_following_occurrences(db, task, recurrence_id, horizon)
+
     db.commit()
     db.refresh(task)
     return task
@@ -54,15 +147,42 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
     updates = payload.model_dump(exclude_unset=True)
     if "project_id" in updates and db.get(models.Project, updates["project_id"]) is None:
         raise HTTPException(status_code=404, detail="Project not found")
+    recurring = updates.pop("recurring", None)
     for field, value in updates.items():
         setattr(task, field, value)
+
+    if recurring is True and task.recurrence_id is None:
+        if task.due_at is None:
+            raise HTTPException(status_code=400, detail="A meeting needs a date to repeat")
+        task.recurrence_id = str(uuid.uuid4())
+        horizon = datetime.now(timezone.utc) + _RECURRENCE_HORIZON
+        _generate_following_occurrences(db, task, task.recurrence_id, horizon)
+    elif recurring is False and task.recurrence_id is not None:
+        # Drop the rest of the series from here on and detach every remaining
+        # row (including past occurrences) — see _stop_series.
+        old_recurrence_id = task.recurrence_id
+        db.query(models.Task).filter(
+            models.Task.recurrence_id == old_recurrence_id,
+            models.Task.id != task.id,
+            models.Task.due_at > task.due_at,
+        ).delete(synchronize_session=False)
+        _stop_series(db, old_recurrence_id)
+
     db.commit()
     db.refresh(task)
     return task
 
 
 @router.delete("/{task_id}", status_code=204)
-def delete_task(task_id: int, db: Session = Depends(get_db)):
+def delete_task(task_id: int, scope: Literal["single", "future"] = "single", db: Session = Depends(get_db)):
     task = _get_task_or_404(task_id, db)
-    db.delete(task)
+    if scope == "future" and task.recurrence_id is not None:
+        recurrence_id = task.recurrence_id
+        db.query(models.Task).filter(
+            models.Task.recurrence_id == recurrence_id,
+            models.Task.due_at >= task.due_at,
+        ).delete(synchronize_session=False)
+        _stop_series(db, recurrence_id)
+    else:
+        db.delete(task)
     db.commit()

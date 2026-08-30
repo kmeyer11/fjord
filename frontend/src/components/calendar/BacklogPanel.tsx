@@ -3,11 +3,22 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { taskColor } from '../../lib/colors'
+import { RepeatIcon } from '../icons'
 import NewMeetingInline from '../NewMeetingInline'
 
 export const BACKLOG_DROP_ID = 'backlog-panel'
 
-function DraggableTask({ task, color, subtitle }: { task: Task; color: string; subtitle?: string }) {
+function DraggableTask({
+  task,
+  color,
+  subtitle,
+  onClick,
+}: {
+  task: Task
+  color: string
+  subtitle?: string
+  onClick?: () => void
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `task-${task.id}`,
     data: { task },
@@ -18,6 +29,7 @@ function DraggableTask({ task, color, subtitle }: { task: Task; color: string; s
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={onClick}
       style={{ transform: CSS.Translate.toString(transform) }}
       className={[
         'flex w-36 shrink-0 touch-none items-center gap-2 rounded-lg border border-hairline bg-surface px-2.5 py-2 text-[13px] md:w-auto',
@@ -26,7 +38,10 @@ function DraggableTask({ task, color, subtitle }: { task: Task; color: string; s
     >
       <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-text">{task.title}</p>
+        <p className="flex items-center gap-1 truncate text-text">
+          {task.recurrence_id != null && <RepeatIcon className="size-3 shrink-0 text-text-tertiary" />}
+          <span className="truncate">{task.title}</span>
+        </p>
         {subtitle && <p className="truncate text-[11px] text-text-tertiary">{subtitle}</p>}
       </div>
     </div>
@@ -45,12 +60,14 @@ export default function BacklogPanel({
   meetingTasks,
   projectColors,
   onCreateMeeting,
+  onTaskClick,
 }: {
   backlogTasks: Task[]
   scheduledTasks: Task[]
   meetingTasks: Task[]
   projectColors: Map<number, string>
-  onCreateMeeting: (data: { title: string; due_at: string }) => Promise<void>
+  onCreateMeeting: (data: { title: string; due_at: string; recurring?: boolean }) => Promise<void>
+  onTaskClick?: (task: Task) => void
 }) {
   const { t, locale } = useLanguage()
   const { setNodeRef, isOver } = useDroppable({ id: BACKLOG_DROP_ID })
@@ -70,7 +87,12 @@ export default function BacklogPanel({
           <p className="px-1 text-[12px] text-text-tertiary">{t.calendar.nothingUnscheduled}</p>
         )}
         {backlogTasks.map((task) => (
-          <DraggableTask key={task.id} task={task} color={taskColor(task, projectColors)} />
+          <DraggableTask
+            key={task.id}
+            task={task}
+            color={taskColor(task, projectColors)}
+            onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+          />
         ))}
       </div>
 
@@ -85,6 +107,7 @@ export default function BacklogPanel({
                 key={task.id}
                 task={task}
                 color={taskColor(task, projectColors)}
+                onClick={onTaskClick ? () => onTaskClick(task) : undefined}
                 subtitle={
                   task.due_at
                     ? new Date(task.due_at).toLocaleString(locale, {
@@ -111,6 +134,7 @@ export default function BacklogPanel({
               key={task.id}
               task={task}
               color={taskColor(task, projectColors)}
+              onClick={onTaskClick ? () => onTaskClick(task) : undefined}
               subtitle={
                 task.due_at
                   ? new Date(task.due_at).toLocaleString(locale, {

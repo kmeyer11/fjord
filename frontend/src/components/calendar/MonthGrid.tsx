@@ -1,10 +1,12 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { useState } from 'react'
 import type { ExternalEvent, Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { dateKey, getMonthGridDays, isSameDay } from '../../lib/date'
 import { taskColor } from '../../lib/colors'
 import { useIsDesktop } from '../../lib/useIsDesktop'
+import Modal from '../Modal'
 
 const MAX_VISIBLE_DESKTOP = 3
 
@@ -39,6 +41,7 @@ function MonthDayCell({
   projectColors,
   onTaskClick,
   onExternalEventClick,
+  onShowMore,
 }: {
   date: Date
   inMonth: boolean
@@ -47,6 +50,7 @@ function MonthDayCell({
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
   onExternalEventClick?: (event: ExternalEvent) => void
+  onShowMore?: () => void
 }) {
   const { t } = useLanguage()
   const isDesktop = useIsDesktop()
@@ -55,7 +59,9 @@ function MonthDayCell({
     data: { date, hour: 9 },
   })
   const isToday = isSameDay(date, new Date())
-  const overflow = Math.max(tasks.length - MAX_VISIBLE_DESKTOP, 0)
+  const shownExternal = Math.min(externalEvents.length, MAX_VISIBLE_DESKTOP)
+  const shownTasks = Math.min(tasks.length, MAX_VISIBLE_DESKTOP)
+  const overflow = externalEvents.length + tasks.length - shownExternal - shownTasks
 
   return (
     <div
@@ -81,7 +87,11 @@ function MonthDayCell({
               key={e.id}
               type="button"
               onClick={onExternalEventClick ? () => onExternalEventClick(e) : undefined}
-              className="truncate rounded border border-dashed border-text-tertiary/50 px-1 py-0.5 text-left text-[10px] text-text-secondary"
+              style={e.calendar_color ? { backgroundColor: `${e.calendar_color}1f`, borderColor: `${e.calendar_color}80` } : undefined}
+              className={[
+                'truncate rounded border border-dashed px-1 py-0.5 text-left text-[10px] text-text-secondary',
+                e.calendar_color ? '' : 'border-text-tertiary/50',
+              ].join(' ')}
               title={`${e.title} — ${e.calendar} (read-only)`}
             >
               {e.title}
@@ -95,7 +105,15 @@ function MonthDayCell({
               onClick={onTaskClick ? () => onTaskClick(t) : undefined}
             />
           ))}
-          {overflow > 0 && <span className="px-1 text-[10px] text-text-tertiary">{t.calendar.moreCount(overflow)}</span>}
+          {overflow > 0 && (
+            <button
+              type="button"
+              onClick={onShowMore}
+              className="px-1 text-left text-[10px] font-medium text-text-tertiary hover:text-text-secondary hover:underline"
+            >
+              {t.calendar.moreCount(overflow)}
+            </button>
+          )}
         </div>
       ) : (
         tasks.length > 0 && (
@@ -111,6 +129,77 @@ function MonthDayCell({
         )
       )}
     </div>
+  )
+}
+
+function DayOverviewModal({
+  date,
+  tasks,
+  externalEvents,
+  projectColors,
+  onClose,
+  onTaskClick,
+  onExternalEventClick,
+}: {
+  date: Date
+  tasks: Task[]
+  externalEvents: ExternalEvent[]
+  projectColors: Map<number, string>
+  onClose: () => void
+  onTaskClick?: (task: Task) => void
+  onExternalEventClick?: (event: ExternalEvent) => void
+}) {
+  const { t, locale } = useLanguage()
+  return (
+    <Modal
+      onClose={onClose}
+      header={
+        <span className="text-[15px] font-semibold text-text">
+          {date.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}
+        </span>
+      }
+    >
+      <div className="flex flex-col gap-1.5">
+        {externalEvents.map((e) => (
+          <button
+            key={e.id}
+            type="button"
+            onClick={() => {
+              onClose()
+              onExternalEventClick?.(e)
+            }}
+            style={e.calendar_color ? { backgroundColor: `${e.calendar_color}1f`, borderColor: `${e.calendar_color}80` } : undefined}
+            className={[
+              'truncate rounded-lg border border-dashed px-2.5 py-2 text-left text-[13px] text-text-secondary',
+              e.calendar_color ? '' : 'border-text-tertiary/50',
+            ].join(' ')}
+            title={`${e.title} — ${e.calendar} (read-only)`}
+          >
+            {e.title}
+          </button>
+        ))}
+        {tasks.map((task) => (
+          <button
+            key={task.id}
+            type="button"
+            onClick={() => {
+              onClose()
+              onTaskClick?.(task)
+            }}
+            style={{ backgroundColor: `${taskColor(task, projectColors)}1f`, color: taskColor(task, projectColors) }}
+            className={[
+              'truncate rounded-lg px-2.5 py-2 text-left text-[13px] font-medium',
+              task.status === 'done' ? 'opacity-50 line-through' : '',
+            ].join(' ')}
+          >
+            {task.title}
+          </button>
+        ))}
+        {tasks.length === 0 && externalEvents.length === 0 && (
+          <p className="px-1 text-[13px] text-text-tertiary">{t.calendar.nothingUnscheduled}</p>
+        )}
+      </div>
+    </Modal>
   )
 }
 
@@ -131,6 +220,8 @@ export default function MonthGrid({
 }) {
   const { t } = useLanguage()
   const days = getMonthGridDays(monthDate)
+  const [expandedDay, setExpandedDay] = useState<Date | null>(null)
+  const expandedKey = expandedDay ? dateKey(expandedDay) : null
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -154,10 +245,22 @@ export default function MonthGrid({
               projectColors={projectColors}
               onTaskClick={onTaskClick}
               onExternalEventClick={onExternalEventClick}
+              onShowMore={() => setExpandedDay(d)}
             />
           )
         })}
       </div>
+      {expandedDay && expandedKey && (
+        <DayOverviewModal
+          date={expandedDay}
+          tasks={tasksByDay.get(expandedKey) ?? []}
+          externalEvents={externalByDay.get(expandedKey) ?? []}
+          projectColors={projectColors}
+          onClose={() => setExpandedDay(null)}
+          onTaskClick={onTaskClick}
+          onExternalEventClick={onExternalEventClick}
+        />
+      )}
     </div>
   )
 }

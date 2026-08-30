@@ -10,10 +10,12 @@ environment variables (see app.config) for headless/automated deployment.
 """
 
 import logging
+import re
 import time
 from datetime import date, datetime
 
 import caldav
+from caldav.elements import ical
 
 from app import config_store, secrets_store
 from app.config import settings
@@ -62,6 +64,17 @@ def test_connection(username: str, password: str) -> str | None:
         return str(exc)
 
 
+_HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$")
+
+
+def _normalize_color(value: str | None) -> str | None:
+    """Apple publishes calendar-color as #RRGGBB or #RRGGBBAA — drop any
+    alpha channel so it's a plain CSS hex color, or None if absent/unparseable."""
+    if not value or not _HEX_COLOR_RE.match(value):
+        return None
+    return value[:7].lower()
+
+
 def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[dict]:
     global _last_error, _last_synced_at
 
@@ -81,6 +94,15 @@ def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[di
         principal = client.principal()
         events: list[dict] = []
         for calendar in principal.calendars():
+            # One extra property fetch per calendar (not per event) — cheap, and
+            # covered by the same cache/TTL as the events themselves. Not every
+            # CalDAV server implements this (non-standard) property, so a
+            # failure here shouldn't take down the whole sync — just that
+            # calendar's color.
+            try:
+                calendar_color = _normalize_color(calendar.get_property(ical.CalendarColor()))
+            except Exception:  # noqa: BLE001 - best-effort; events still render without a color
+                calendar_color = None
             for result in calendar.search(start=start, end=end, event=True, expand=True):
                 vevent = result.icalendar_component
                 dtstart = vevent["dtstart"].dt
@@ -93,6 +115,7 @@ def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[di
                     {
                         "id": str(vevent.get("uid", result.url)),
                         "calendar": str(calendar.name),
+                        "calendar_color": calendar_color,
                         "title": str(vevent.get("summary", "Untitled")),
                         "start": _to_iso(dtstart),
                         "end": _to_iso(dtend),

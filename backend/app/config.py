@@ -39,5 +39,11 @@ class Settings(BaseSettings):
     icloud_app_password: str | None = None
     caldav_url: str = "https://caldav.icloud.com"
 
+    # IANA zone used to keep recurring meetings on their local wall-clock time
+    # (e.g. "every Tuesday at 10") across DST changes, rather than drifting by
+    # an hour when the clocks change. Single-user app, so this is one setting
+    # rather than a per-user preference.
+    local_timezone: str = "Europe/Copenhagen"
+
 
 settings = Settings()

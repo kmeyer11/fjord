@@ -22,7 +22,12 @@ export default function ExternalEventDetailModal({
       onClose={onClose}
       header={
         <>
-          <span className="text-[15px] font-semibold text-text">{event.calendar}</span>
+          <span className="flex items-center gap-1.5 text-[15px] font-semibold text-text">
+            {event.calendar_color && (
+              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: event.calendar_color }} />
+            )}
+            {event.calendar}
+          </span>
           <button onClick={onClose} className="text-[15px] text-accent">
             {t.externalEventModal.close}
           </button>

@@ -52,6 +52,8 @@ const en = {
     descriptionPlaceholder: 'Add a description…',
     fieldCriticality: 'Criticality',
     delete: 'Delete Task',
+    deleteOccurrence: 'Delete This Occurrence',
+    deleteFuture: 'Delete This and Future Occurrences',
   },
 
   newTaskModal: {
@@ -71,6 +73,8 @@ const en = {
     newMeeting: 'New meeting',
     meetingTitlePlaceholder: 'Meeting title',
     meetingDateTime: 'Date & time',
+    allDay: 'All day',
+    repeatWeekly: 'Repeat weekly',
     nothingUnscheduled: 'Nothing unscheduled — drag a task here to unschedule it.',
     moreCount: (n: number) => `+${n} more`,
     loadError: 'Something went wrong loading the calendar',
@@ -178,6 +182,8 @@ const da: typeof en = {
     descriptionPlaceholder: 'Tilføj en beskrivelse…',
     fieldCriticality: 'Kritikalitet',
     delete: 'Slet opgave',
+    deleteOccurrence: 'Slet denne forekomst',
+    deleteFuture: 'Slet denne og fremtidige forekomster',
   },
 
   newTaskModal: {
@@ -197,6 +203,8 @@ const da: typeof en = {
     newMeeting: 'Nyt møde',
     meetingTitlePlaceholder: 'Mødetitel',
     meetingDateTime: 'Dato og tid',
+    allDay: 'Hele dagen',
+    repeatWeekly: 'Gentag ugentligt',
     nothingUnscheduled: 'Intet uplanlagt — træk en opgave hertil for at fjerne den fra kalenderen.',
     moreCount: (n: number) => `+${n} mere`,
     loadError: 'Der gik noget galt under indlæsning af kalenderen',
