@@ -48,8 +48,13 @@ export const api = {
     data: { title: string; description?: string; criticality?: TaskCriticality },
   ) =>
     request<Task>(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify(data) }),
-  createMeeting: (data: { title: string; description?: string; due_at: string }) =>
-    request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
+  createMeeting: (data: {
+    title: string
+    description?: string
+    due_at: string
+    all_day?: boolean
+    recurring?: boolean
+  }) => request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
   updateTask: (
     id: number,
     data: Partial<{
@@ -58,9 +63,12 @@ export const api = {
       status: TaskStatus
       criticality: TaskCriticality
       due_at: string | null
+      all_day: boolean
+      recurring: boolean
     }>,
   ) => request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
+  deleteTask: (id: number, scope: 'single' | 'future' = 'single') =>
+    request<void>(`/tasks/${id}?scope=${scope}`, { method: 'DELETE' }),
 
   listExternalEvents: (start: Date, end: Date, force = false) =>
     request<ExternalEvent[]>(

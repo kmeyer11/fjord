@@ -29,6 +29,9 @@ export interface Task {
   criticality: TaskCriticality
   category: TaskCategory
   due_at: string | null
+  all_day: boolean
+  /** Shared by every occurrence of a weekly-recurring meeting; null otherwise. */
+  recurrence_id: string | null
   created_at: string
   updated_at: string
 }
@@ -37,6 +40,8 @@ export interface Task {
 export interface ExternalEvent {
   id: string
   calendar: string
+  /** The source calendar's own color from Apple Calendar, e.g. "#2968d8" — null if unset/unsupported by the server. */
+  calendar_color: string | null
   title: string
   start: string
   end: string

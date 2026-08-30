@@ -1,10 +1,35 @@
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from app.database import Base
+
+
+class UTCDateTime(TypeDecorator):
+    """SQLite's DateTime silently drops tzinfo on both write and read, so a
+    tz-aware datetime in (the frontend always sends full ISO strings) comes
+    back naive — which every consumer (the API response, this app's own date
+    arithmetic) then risks misreading as local time instead of UTC. This
+    re-attaches UTC on the way out and normalizes to UTC before stripping on
+    the way in, so values round-trip correctly regardless of caller offset."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value: datetime | None, dialect) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=timezone.utc)
 
 
 class TaskStatus(str, enum.Enum):
@@ -46,10 +71,13 @@ class Task(Base):
     category: Mapped[TaskCategory] = mapped_column(
         Enum(TaskCategory), nullable=False, default=TaskCategory.task
     )
-    due_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    due_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    all_day: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Shared by every occurrence of a weekly-recurring meeting; null for one-off tasks/meetings.
+    recurrence_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        UTCDateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     project: Mapped["Project | None"] = relationship(back_populates="tasks")

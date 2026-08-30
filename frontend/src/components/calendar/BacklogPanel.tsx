@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { taskColor } from '../../lib/colors'
+import { RepeatIcon } from '../icons'
 import NewMeetingInline from '../NewMeetingInline'
 
 export const BACKLOG_DROP_ID = 'backlog-panel'
@@ -26,7 +27,10 @@ function DraggableTask({ task, color, subtitle }: { task: Task; color: string; s
     >
       <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-text">{task.title}</p>
+        <p className="flex items-center gap-1 truncate text-text">
+          {task.recurrence_id != null && <RepeatIcon className="size-3 shrink-0 text-text-tertiary" />}
+          <span className="truncate">{task.title}</span>
+        </p>
         {subtitle && <p className="truncate text-[11px] text-text-tertiary">{subtitle}</p>}
       </div>
     </div>
@@ -50,7 +54,7 @@ export default function BacklogPanel({
   scheduledTasks: Task[]
   meetingTasks: Task[]
   projectColors: Map<number, string>
-  onCreateMeeting: (data: { title: string; due_at: string }) => Promise<void>
+  onCreateMeeting: (data: { title: string; due_at: string; recurring?: boolean }) => Promise<void>
 }) {
   const { t, locale } = useLanguage()
   const { setNodeRef, isOver } = useDroppable({ id: BACKLOG_DROP_ID })

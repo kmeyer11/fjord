@@ -44,6 +44,7 @@ class TaskBase(BaseModel):
     criticality: int = Field(default=3, ge=1, le=5)
     category: TaskCategory = TaskCategory.task
     due_at: datetime | None = None
+    all_day: bool = False
 
 
 class TaskCreate(TaskBase):
@@ -56,7 +57,11 @@ class TaskUpdate(BaseModel):
     status: TaskStatus | None = None
     criticality: int | None = Field(default=None, ge=1, le=5)
     due_at: datetime | None = None
+    all_day: bool | None = None
     project_id: int | None = None
+    # Meetings only. True turns this (and future) meeting into a weekly series
+    # starting from its due_at; False detaches it and drops future occurrences.
+    recurring: bool | None = None
 
 
 class Task(TaskBase):
@@ -64,6 +69,7 @@ class Task(TaskBase):
 
     id: int
     project_id: int | None
+    recurrence_id: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -72,11 +78,15 @@ class MeetingCreate(BaseModel):
     title: str
     description: str = ""
     due_at: datetime
+    all_day: bool = False
+    # If set, generates a weekly-repeating series on the same weekday and time as due_at.
+    recurring: bool = False
 
 
 class ExternalEvent(BaseModel):
     id: str
     calendar: str
+    calendar_color: str | None = None
     title: str
     start: datetime
     end: datetime

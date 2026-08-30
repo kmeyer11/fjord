@@ -81,7 +81,11 @@ function MonthDayCell({
               key={e.id}
               type="button"
               onClick={onExternalEventClick ? () => onExternalEventClick(e) : undefined}
-              className="truncate rounded border border-dashed border-text-tertiary/50 px-1 py-0.5 text-left text-[10px] text-text-secondary"
+              style={e.calendar_color ? { backgroundColor: `${e.calendar_color}1f`, borderColor: `${e.calendar_color}80` } : undefined}
+              className={[
+                'truncate rounded border border-dashed px-1 py-0.5 text-left text-[10px] text-text-secondary',
+                e.calendar_color ? '' : 'border-text-tertiary/50',
+              ].join(' ')}
               title={`${e.title} — ${e.calendar} (read-only)`}
             >
               {e.title}

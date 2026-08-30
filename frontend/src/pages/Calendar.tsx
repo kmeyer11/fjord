@@ -82,13 +82,16 @@ export default function Calendar() {
   const tasksByDay = new Map<string, Task[]>()
   const backlogTasks: Task[] = []
   const scheduledTasks: Task[] = []
-  const meetingTasks: Task[] = []
+  const meetingTasksRaw: Task[] = []
   for (const task of tasks) {
     if (task.due_at) {
       const key = dateKey(new Date(task.due_at))
       tasksByDay.set(key, [...(tasksByDay.get(key) ?? []), task])
       if (task.category === 'meeting') {
-        meetingTasks.push(task)
+        // A recurring series materializes many rows into the future — only
+        // surface upcoming ones here, or the sidebar list grows unbounded.
+        const isPastRecurrence = task.recurrence_id && new Date(task.due_at) < new Date()
+        if (!isPastRecurrence) meetingTasksRaw.push(task)
       } else if (task.status === 'scheduled') {
         scheduledTasks.push(task)
       }
@@ -96,6 +99,18 @@ export default function Calendar() {
       backlogTasks.push(task)
     }
   }
+  // A recurring series is one meeting, not N — collapse it to its next
+  // upcoming occurrence; the calendar grid still shows every individual date.
+  const seenSeries = new Set<string>()
+  const meetingTasks = meetingTasksRaw
+    .slice()
+    .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
+    .filter((task) => {
+      if (!task.recurrence_id) return true
+      if (seenSeries.has(task.recurrence_id)) return false
+      seenSeries.add(task.recurrence_id)
+      return true
+    })
 
   const externalByDay = new Map<string, ExternalEvent[]>()
   for (const event of externalEvents) {
@@ -185,7 +200,9 @@ export default function Calendar() {
           projectColors={projectColors}
           onCreateMeeting={async (data) => {
             const created = await api.createMeeting(data)
-            setTasks((prev) => [...prev, created])
+            // A recurring series adds more rows than the one returned — reload to pick them up.
+            if (created.recurrence_id) reloadTasks()
+            else setTasks((prev) => [...prev, created])
           }}
         />
       </div>
@@ -195,12 +212,25 @@ export default function Calendar() {
           task={editingTask}
           onClose={() => setEditingTask(null)}
           onSave={async (data) => {
+            const wasRecurring = editingTask.recurrence_id != null
             const updated = await api.updateTask(editingTask.id, data)
-            setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+            // Toggling recurrence adds/removes a whole series' worth of rows —
+            // a plain in-place update of this one task can't reflect that.
+            if (data.recurring !== undefined && data.recurring !== wasRecurring) reloadTasks()
+            else setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
           }}
-          onDelete={async () => {
-            await api.deleteTask(editingTask.id)
-            setTasks((prev) => prev.filter((t) => t.id !== editingTask.id))
+          onDelete={async (scope) => {
+            await api.deleteTask(editingTask.id, scope)
+            if (scope === 'future' && editingTask.recurrence_id) {
+              setTasks((prev) =>
+                prev.filter(
+                  (t) =>
+                    !(t.recurrence_id === editingTask.recurrence_id && (t.due_at ?? '') >= (editingTask.due_at ?? '')),
+                ),
+              )
+            } else {
+              setTasks((prev) => prev.filter((t) => t.id !== editingTask.id))
+            }
           }}
         />
       )}

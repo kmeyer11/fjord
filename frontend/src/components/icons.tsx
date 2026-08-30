@@ -71,6 +71,15 @@ export function PencilIcon({ className }: IconProps) {
   )
 }
 
+export function RepeatIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4.5 12a7.5 7.5 0 0 1 12.6-5.5L19.5 8.5M19.5 8.5V4.5M19.5 8.5h-4" />
+      <path d="M19.5 12a7.5 7.5 0 0 1-12.6 5.5L4.5 15.5M4.5 15.5v4M4.5 15.5h4" />
+    </svg>
+  )
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>
