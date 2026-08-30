@@ -5,8 +5,6 @@ export const LOCALE: Record<Language, string> = { en: 'en-US', da: 'da-DK' }
 const en = {
   nav: { projects: 'Projects', calendar: 'Calendar', settings: 'Settings' },
 
-  priority: { low: 'low', medium: 'medium', high: 'high' },
-
   dashboard: {
     title: 'Projects',
     newProject: 'New Project',
@@ -27,6 +25,14 @@ const en = {
     color: 'Color',
   },
 
+  editProjectModal: {
+    title: 'Edit Project',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete Project',
+    deleteConfirm: (name: string) => `Delete "${name}" and all its tasks? This can't be undone.`,
+  },
+
   board: {
     backlog: 'Backlog',
     scheduled: 'Scheduled',
@@ -44,7 +50,14 @@ const en = {
     fieldTitle: 'Title',
     fieldDescription: 'Description',
     descriptionPlaceholder: 'Add a description…',
+    fieldCriticality: 'Criticality',
     delete: 'Delete Task',
+  },
+
+  newTaskModal: {
+    title: 'New Task',
+    cancel: 'Cancel',
+    create: 'Create',
   },
 
   calendar: {
@@ -118,8 +131,6 @@ const en = {
 const da: typeof en = {
   nav: { projects: 'Projekter', calendar: 'Kalender', settings: 'Indstillinger' },
 
-  priority: { low: 'lav', medium: 'mellem', high: 'høj' },
-
   dashboard: {
     title: 'Projekter',
     newProject: 'Nyt projekt',
@@ -140,6 +151,14 @@ const da: typeof en = {
     color: 'Farve',
   },
 
+  editProjectModal: {
+    title: 'Rediger projekt',
+    cancel: 'Annuller',
+    save: 'Gem',
+    delete: 'Slet projekt',
+    deleteConfirm: (name: string) => `Slet "${name}" og alle dets opgaver? Dette kan ikke fortrydes.`,
+  },
+
   board: {
     backlog: 'Backlog',
     scheduled: 'Planlagt',
@@ -157,7 +176,14 @@ const da: typeof en = {
     fieldTitle: 'Titel',
     fieldDescription: 'Beskrivelse',
     descriptionPlaceholder: 'Tilføj en beskrivelse…',
+    fieldCriticality: 'Kritikalitet',
     delete: 'Slet opgave',
+  },
+
+  newTaskModal: {
+    title: 'Ny opgave',
+    cancel: 'Annuller',
+    create: 'Opret',
   },
 
   calendar: {

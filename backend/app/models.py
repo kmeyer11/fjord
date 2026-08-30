@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -11,12 +11,6 @@ class TaskStatus(str, enum.Enum):
     backlog = "backlog"
     scheduled = "scheduled"
     done = "done"
-
-
-class TaskPriority(str, enum.Enum):
-    low = "low"
-    medium = "medium"
-    high = "high"
 
 
 class TaskCategory(str, enum.Enum):
@@ -47,9 +41,8 @@ class Task(Base):
     status: Mapped[TaskStatus] = mapped_column(
         Enum(TaskStatus), nullable=False, default=TaskStatus.backlog
     )
-    priority: Mapped[TaskPriority] = mapped_column(
-        Enum(TaskPriority), nullable=False, default=TaskPriority.medium
-    )
+    # 1 (least critical) through 5 (most critical).
+    criticality: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
     category: Mapped[TaskCategory] = mapped_column(
         Enum(TaskCategory), nullable=False, default=TaskCategory.task
     )
@@ -60,3 +53,5 @@ class Task(Base):
     )
 
     project: Mapped["Project | None"] = relationship(back_populates="tasks")
+
+    __table_args__ = (CheckConstraint("criticality BETWEEN 1 AND 5", name="ck_tasks_criticality_range"),)

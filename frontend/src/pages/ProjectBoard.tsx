@@ -1,17 +1,19 @@
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { ProjectWithCounts, Task, TaskStatus } from '../api/types'
 import BoardColumn from '../components/BoardColumn'
-import { ChevronLeftIcon } from '../components/icons'
-import NewTaskInline from '../components/NewTaskInline'
+import EditProjectModal from '../components/EditProjectModal'
+import { ChevronLeftIcon, PencilIcon, PlusIcon } from '../components/icons'
+import NewTaskModal from '../components/NewTaskModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
 
 export default function ProjectBoard() {
   const { t } = useLanguage()
   const { projectId } = useParams()
+  const navigate = useNavigate()
   const id = Number(projectId)
 
   const COLUMNS: { status: TaskStatus; title: string }[] = [
@@ -24,6 +26,8 @@ export default function ProjectBoard() {
   const [tasks, setTasks] = useState<Task[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [creatingTask, setCreatingTask] = useState(false)
+  const [editingProject, setEditingProject] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -77,6 +81,13 @@ export default function ProjectBoard() {
           style={{ backgroundColor: project.color, boxShadow: `0 0 0 4px ${project.color}26` }}
         />
         <h1 className="text-[20px] font-bold tracking-tight text-text">{project.name}</h1>
+        <button
+          onClick={() => setEditingProject(true)}
+          aria-label={t.editProjectModal.title}
+          className="rounded-full p-1.5 text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
+        >
+          <PencilIcon className="size-4" />
+        </button>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -90,12 +101,13 @@ export default function ProjectBoard() {
               onTaskClick={setEditingTask}
               footer={
                 status === 'backlog' ? (
-                  <NewTaskInline
-                    onCreate={async (title) => {
-                      const task = await api.createTask(id, { title })
-                      setTasks((prev) => (prev ? [...prev, task] : [task]))
-                    }}
-                  />
+                  <button
+                    onClick={() => setCreatingTask(true)}
+                    className="flex items-center gap-1.5 rounded-xl p-2 text-left text-[13px] font-medium text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
+                  >
+                    <PlusIcon className="size-4" />
+                    {t.board.addTask}
+                  </button>
                 ) : undefined
               }
             />
@@ -114,6 +126,31 @@ export default function ProjectBoard() {
           onDelete={async () => {
             await api.deleteTask(editingTask.id)
             setTasks((prev) => (prev ? prev.filter((t) => t.id !== editingTask.id) : prev))
+          }}
+        />
+      )}
+
+      {creatingTask && (
+        <NewTaskModal
+          onClose={() => setCreatingTask(false)}
+          onCreate={async (data) => {
+            const task = await api.createTask(id, data)
+            setTasks((prev) => (prev ? [...prev, task] : [task]))
+          }}
+        />
+      )}
+
+      {editingProject && (
+        <EditProjectModal
+          project={project}
+          onClose={() => setEditingProject(false)}
+          onSave={async (data) => {
+            const updated = await api.updateProject(id, data)
+            setProject(updated)
+          }}
+          onDelete={async () => {
+            await api.deleteProject(id)
+            navigate('/')
           }}
         />
       )}

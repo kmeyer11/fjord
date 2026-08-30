@@ -2,12 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
-
-const PRIORITY_STYLES: Record<Task['priority'], string> = {
-  low: 'text-text-tertiary bg-black/[0.04]',
-  medium: 'text-birch bg-birch/15',
-  high: 'text-clay bg-clay/15',
-}
+import { CRITICALITY_STYLES } from './CriticalityPicker'
 
 export default function TaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
   const { t, locale } = useLanguage()
@@ -29,9 +24,17 @@ export default function TaskCard({ task, onClick }: { task: Task; onClick?: () =
       ].join(' ')}
     >
       <p className="text-text">{task.title}</p>
+      {task.description && (
+        <p className="mt-1 line-clamp-3 whitespace-pre-line text-[12.5px] text-text-secondary">
+          {task.description}
+        </p>
+      )}
       <div className="mt-2 flex items-center gap-2">
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${PRIORITY_STYLES[task.priority]}`}>
-          {t.priority[task.priority]}
+        <span
+          title={`${t.taskModal.fieldCriticality}: ${task.criticality}/5`}
+          className={`flex size-5 items-center justify-center rounded-full text-[11px] font-semibold ${CRITICALITY_STYLES[task.criticality]}`}
+        >
+          {task.criticality}
         </span>
         {task.due_at && (
           <span className="text-[11px] text-text-tertiary">

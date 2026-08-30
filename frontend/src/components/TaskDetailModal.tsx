@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { Task } from '../api/types'
+import type { Task, TaskCriticality } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { toDatetimeLocalValue } from '../lib/date'
+import CriticalityPicker from './CriticalityPicker'
 import Modal from './Modal'
 
 export default function TaskDetailModal({
@@ -12,13 +13,19 @@ export default function TaskDetailModal({
 }: {
   task: Task
   onClose: () => void
-  onSave: (data: { title: string; description: string; due_at?: string }) => Promise<void>
+  onSave: (data: {
+    title: string
+    description: string
+    criticality: TaskCriticality
+    due_at?: string
+  }) => Promise<void>
   onDelete: () => Promise<void>
 }) {
   const { t } = useLanguage()
   const isMeeting = task.category === 'meeting'
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description)
+  const [criticality, setCriticality] = useState<TaskCriticality>(task.criticality)
   const [dueAt, setDueAt] = useState(task.due_at ? toDatetimeLocalValue(new Date(task.due_at)) : '')
   const [submitting, setSubmitting] = useState(false)
 
@@ -31,6 +38,7 @@ export default function TaskDetailModal({
       await onSave({
         title: title.trim(),
         description,
+        criticality,
         due_at: isMeeting ? new Date(dueAt).toISOString() : undefined,
       })
       onClose()
@@ -102,6 +110,13 @@ export default function TaskDetailModal({
             className="resize-none rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[14px] text-text outline-none placeholder:text-text-tertiary focus:border-accent"
           />
         </div>
+
+        {!isMeeting && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium text-text-secondary">{t.taskModal.fieldCriticality}</span>
+            <CriticalityPicker value={criticality} onChange={setCriticality} />
+          </div>
+        )}
 
         {isMeeting && (
           <div className="flex flex-col gap-1.5">

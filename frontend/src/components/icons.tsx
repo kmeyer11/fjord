@@ -62,6 +62,15 @@ export function GearIcon({ className }: IconProps) {
   )
 }
 
+export function PencilIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M14.5 4.5l5 5L8 21H3v-5L14.5 4.5Z" />
+      <path d="M12.5 6.5l5 5" />
+    </svg>
+  )
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>
