@@ -38,6 +38,7 @@ function MonthDayCell({
   externalEvents,
   projectColors,
   onTaskClick,
+  onExternalEventClick,
 }: {
   date: Date
   inMonth: boolean
@@ -45,6 +46,7 @@ function MonthDayCell({
   externalEvents: ExternalEvent[]
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
+  onExternalEventClick?: (event: ExternalEvent) => void
 }) {
   const { t } = useLanguage()
   const isDesktop = useIsDesktop()
@@ -75,13 +77,15 @@ function MonthDayCell({
       {isDesktop ? (
         <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
           {externalEvents.slice(0, MAX_VISIBLE_DESKTOP).map((e) => (
-            <div
+            <button
               key={e.id}
-              className="truncate rounded border border-dashed border-text-tertiary/50 px-1 py-0.5 text-[10px] text-text-secondary"
+              type="button"
+              onClick={onExternalEventClick ? () => onExternalEventClick(e) : undefined}
+              className="truncate rounded border border-dashed border-text-tertiary/50 px-1 py-0.5 text-left text-[10px] text-text-secondary"
               title={`${e.title} — ${e.calendar} (read-only)`}
             >
               {e.title}
-            </div>
+            </button>
           ))}
           {tasks.slice(0, MAX_VISIBLE_DESKTOP).map((t) => (
             <MonthTaskChip
@@ -116,12 +120,14 @@ export default function MonthGrid({
   externalByDay,
   projectColors,
   onTaskClick,
+  onExternalEventClick,
 }: {
   monthDate: Date
   tasksByDay: Map<string, Task[]>
   externalByDay: Map<string, ExternalEvent[]>
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
+  onExternalEventClick?: (event: ExternalEvent) => void
 }) {
   const { t } = useLanguage()
   const days = getMonthGridDays(monthDate)
@@ -147,6 +153,7 @@ export default function MonthGrid({
               externalEvents={externalByDay.get(key) ?? []}
               projectColors={projectColors}
               onTaskClick={onTaskClick}
+              onExternalEventClick={onExternalEventClick}
             />
           )
         })}

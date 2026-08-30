@@ -87,6 +87,8 @@ def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[di
                 dtend_prop = vevent.get("dtend")
                 dtend = dtend_prop.dt if dtend_prop else dtstart
                 all_day = not isinstance(dtstart, datetime)
+                location = vevent.get("location")
+                description = vevent.get("description")
                 events.append(
                     {
                         "id": str(vevent.get("uid", result.url)),
@@ -95,6 +97,8 @@ def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[di
                         "start": _to_iso(dtstart),
                         "end": _to_iso(dtend),
                         "all_day": all_day,
+                        "location": str(location) if location else None,
+                        "description": str(description) if description else None,
                     }
                 )
         _cache[cache_key] = (time.time(), events)

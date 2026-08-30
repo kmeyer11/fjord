@@ -40,4 +40,6 @@ export interface ExternalEvent {
   start: string
   end: string
   all_day: boolean
+  location: string | null
+  description: string | null
 }

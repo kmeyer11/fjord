@@ -41,18 +41,20 @@ export function CalendarTaskBlock({ task, color, onClick }: { task: Task; color:
   )
 }
 
-export function ExternalEventBlock({ event }: { event: ExternalEvent }) {
+export function ExternalEventBlock({ event, onClick }: { event: ExternalEvent; onClick?: () => void }) {
   const start = new Date(event.start)
   const end = new Date(event.end)
   const height = Math.max((topFor(end) - topFor(start)) || BLOCK_HEIGHT, 18)
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       style={{ top: topFor(start), height }}
-      className="pointer-events-none absolute inset-x-0.5 z-0 overflow-hidden rounded-md border border-dashed border-text-tertiary/50 bg-surface/70 px-1.5 py-0.5 text-[11px] text-text-secondary"
+      className="pointer-events-auto absolute inset-x-0.5 z-0 overflow-hidden rounded-md border border-dashed border-text-tertiary/50 bg-surface/70 px-1.5 py-0.5 text-left text-[11px] text-text-secondary"
       title={`${event.title} — ${event.calendar} (read-only)`}
     >
       <span className="truncate">{event.title}</span>
-    </div>
+    </button>
   )
 }

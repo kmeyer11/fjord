@@ -81,6 +81,8 @@ class ExternalEvent(BaseModel):
     start: datetime
     end: datetime
     all_day: bool
+    location: str | None = None
+    description: str | None = None
 
 
 class ICloudCredentials(BaseModel):
