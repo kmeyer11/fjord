@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import TaskCategory, TaskPriority, TaskStatus
+from app.models import TaskCategory, TaskStatus
 
 
 class TaskCounts(BaseModel):
@@ -41,7 +41,7 @@ class TaskBase(BaseModel):
     title: str
     description: str = ""
     status: TaskStatus = TaskStatus.backlog
-    priority: TaskPriority = TaskPriority.medium
+    criticality: int = Field(default=3, ge=1, le=5)
     category: TaskCategory = TaskCategory.task
     due_at: datetime | None = None
 
@@ -54,7 +54,7 @@ class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     status: TaskStatus | None = None
-    priority: TaskPriority | None = None
+    criticality: int | None = Field(default=None, ge=1, le=5)
     due_at: datetime | None = None
     project_id: int | None = None
 

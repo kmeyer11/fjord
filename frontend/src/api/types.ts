@@ -1,5 +1,6 @@
 export type TaskStatus = 'backlog' | 'scheduled' | 'done'
-export type TaskPriority = 'low' | 'medium' | 'high'
+/** 1 (least critical) through 5 (most critical). */
+export type TaskCriticality = 1 | 2 | 3 | 4 | 5
 export type TaskCategory = 'task' | 'meeting'
 
 export interface TaskCounts {
@@ -25,7 +26,7 @@ export interface Task {
   title: string
   description: string
   status: TaskStatus
-  priority: TaskPriority
+  criticality: TaskCriticality
   category: TaskCategory
   due_at: string | null
   created_at: string

@@ -13,8 +13,8 @@ export default function NewMeetingInline({
   const [title, setTitle] = useState('')
   const [dueAt, setDueAt] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  // Same double-submit guard as NewTaskInline: removing the form on success
-  // fires a native blur, re-invoking the container's onBlur submit handler.
+  // Removing the form on success fires a native blur, re-invoking the
+  // container's onBlur submit handler with the same stale values.
   const handledRef = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
 

@@ -34,7 +34,7 @@ def create_meeting(payload: schemas.MeetingCreate, db: Session = Depends(get_db)
         description=payload.description,
         category=models.TaskCategory.meeting,
         status=models.TaskStatus.scheduled,
-        priority=models.TaskPriority.medium,
+        criticality=3,
         due_at=payload.due_at,
     )
     db.add(task)

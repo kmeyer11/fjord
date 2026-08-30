@@ -1,4 +1,4 @@
-import type { ExternalEvent, Project, ProjectWithCounts, Task, TaskPriority, TaskStatus } from './types'
+import type { ExternalEvent, Project, ProjectWithCounts, Task, TaskCriticality, TaskStatus } from './types'
 
 export const UNAUTHORIZED_EVENT = 'fjord:unauthorized'
 
@@ -45,7 +45,7 @@ export const api = {
   listProjectTasks: (projectId: number) => request<Task[]>(`/projects/${projectId}/tasks`),
   createTask: (
     projectId: number,
-    data: { title: string; description?: string; priority?: TaskPriority },
+    data: { title: string; description?: string; criticality?: TaskCriticality },
   ) =>
     request<Task>(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify(data) }),
   createMeeting: (data: { title: string; description?: string; due_at: string }) =>
@@ -56,7 +56,7 @@ export const api = {
       title: string
       description: string
       status: TaskStatus
-      priority: TaskPriority
+      criticality: TaskCriticality
       due_at: string | null
     }>,
   ) => request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
