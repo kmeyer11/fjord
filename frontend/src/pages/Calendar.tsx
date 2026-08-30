@@ -198,6 +198,7 @@ export default function Calendar() {
           scheduledTasks={scheduledTasks}
           meetingTasks={meetingTasks}
           projectColors={projectColors}
+          onTaskClick={setEditingTask}
           onCreateMeeting={async (data) => {
             const created = await api.createMeeting(data)
             // A recurring series adds more rows than the one returned — reload to pick them up.

@@ -19,6 +19,12 @@ export default function NewMeetingInline({
   // container's onBlur submit handler with the same stale values.
   const handledRef = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Browsers (notably Safari) don't move focus to a checkbox/label on click,
+  // so the blur that fires when you check a box reports relatedTarget as
+  // null even though the click landed inside the container. Track pointer
+  // activity directly, in the capture phase (before any blur fires), instead
+  // of trusting relatedTarget.
+  const pointerDownInsideRef = useRef(false)
 
   function reset() {
     handledRef.current = true
@@ -81,8 +87,19 @@ export default function NewMeetingInline({
     <div
       ref={containerRef}
       className="flex flex-col gap-1.5 rounded-xl border border-hairline bg-surface-raised p-2"
+      onPointerDownCapture={() => {
+        pointerDownInsideRef.current = true
+        // Self-clears next tick so a pointerdown that doesn't cause a blur
+        // (e.g. clicking the already-focused element) can't leave a stale
+        // flag that swallows a later, unrelated blur-to-submit.
+        setTimeout(() => {
+          pointerDownInsideRef.current = false
+        }, 0)
+      }}
       onBlur={(e) => {
-        if (!containerRef.current?.contains(e.relatedTarget as Node)) submit()
+        if (containerRef.current?.contains(e.relatedTarget as Node)) return
+        if (pointerDownInsideRef.current) return
+        submit()
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') submit()
