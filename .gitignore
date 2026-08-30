@@ -6,6 +6,7 @@ backend/fjord.db
 backend/.env
 backend/.fjord_credentials.key
 backend/.fjord_secrets.json
+backend/.dev-data/
 
 # Node / frontend
 frontend/node_modules/

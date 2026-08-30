@@ -65,7 +65,39 @@ npm run dev
 ```
 
 Runs on `http://localhost:5173` and proxies `/api` requests to the backend on
-port 8000 (see `frontend/vite.config.ts`).
+port 8000 by default (see `frontend/vite.config.ts`). Override the target with
+`VITE_DEV_API_TARGET` in `frontend/.env.local` (gitignored) — used below to
+point at a second, locally run backend without touching the tracked config.
+
+### Testing locally against real data
+
+When Fjord is already running as the Docker container on the homelab server
+(or any machine reachable via `docker`), test changes on your Mac against a
+safe copy of that real data instead of an empty database:
+
+```bash
+./scripts/dev-snapshot-db.sh          # defaults to container "fjord-fjord-1"
+cd backend && uvicorn app.main:app --reload --port 8001
+```
+
+```bash
+echo "VITE_DEV_API_TARGET=http://127.0.0.1:8001" > frontend/.env.local
+npm --prefix frontend run dev
+```
+
+The script pulls a point-in-time copy of the live container's `fjord.db`
+using SQLite's Online Backup API (the same mechanism behind `sqlite3
+.backup`) rather than a raw file copy — safe to run while the container is
+serving traffic, since it only ever opens the live file read-only and never
+blocks it for more than a moment. It then runs this checkout's migrations on
+the copy (so schema changes you're testing locally are applied) and writes
+`backend/.env` to point the backend at it. Credentials (PIN hash, iCloud
+password) are deliberately *not* copied, so the local backend starts with no
+PIN set — pick any throwaway PIN when it asks.
+
+Everything the script writes (`backend/.env`, `backend/.dev-data/`,
+`frontend/.env.local`) is gitignored. Re-run the script anytime you want a
+fresher copy of the live data.
 
 ### Production (single process)
 
@@ -176,6 +208,8 @@ frontend/
     components/calendar/  Week grid, day columns, backlog drag panel
     lib/                 Date helpers, responsive breakpoint hook
     pages/               Dashboard, Backlog board, Calendar, Login, Settings
+scripts/
+  dev-snapshot-db.sh    Pull a safe local copy of the live container's DB (see "Testing locally against real data")
 ```
 
 ## Build order
