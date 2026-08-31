@@ -45,6 +45,14 @@ export function ChevronLeftIcon({ className }: IconProps) {
   )
 }
 
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <svg {...base} strokeWidth={1.75} className={className}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
 export function CheckIcon({ className }: IconProps) {
   return (
     <svg {...base} strokeWidth={2} className={className}>

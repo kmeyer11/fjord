@@ -1,12 +1,59 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { taskColor } from '../../lib/colors'
-import { RepeatIcon } from '../icons'
+import { ChevronDownIcon, RepeatIcon } from '../icons'
 import NewMeetingInline from '../NewMeetingInline'
 
 export const BACKLOG_DROP_ID = 'backlog-panel'
+
+/**
+ * Wraps a section's task list so it's independently scrollable, and shows a
+ * chevron hint below it when there's more to scroll to — without it, a
+ * capped-height list with overflow looks like a short, complete list.
+ */
+function ScrollList({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [canScrollDown, setCanScrollDown] = useState(false)
+
+  const update = useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 1)
+  }, [])
+
+  useEffect(() => {
+    update()
+    const el = ref.current
+    if (!el) return
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [update, children])
+
+  // On mobile this section is one row of a horizontal drag strip (see
+  // BacklogPanel below), so `contents` keeps this wrapper transparent to that
+  // layout there — only at md+ does it become the column-with-its-own-scroll
+  // box the desktop sidebar needs.
+  return (
+    <div className="contents md:flex md:min-h-0 md:flex-col md:flex-1">
+      <div
+        ref={ref}
+        onScroll={update}
+        className="contents md:flex md:min-h-0 md:flex-1 md:flex-col md:gap-2 md:overflow-y-auto"
+      >
+        {children}
+      </div>
+      {canScrollDown && (
+        <div className="hidden text-text-tertiary/70 md:flex md:shrink-0 md:justify-center md:pt-0.5">
+          <ChevronDownIcon className="size-3" />
+        </div>
+      )}
+    </div>
+  )
+}
 
 function DraggableTask({
   task,
@@ -77,29 +124,65 @@ export default function BacklogPanel({
       ref={setNodeRef}
       className={[
         'fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 flex gap-2 overflow-x-auto border-t border-hairline bg-surface/90 p-2.5 backdrop-blur-xl transition-colors',
-        'md:static md:inset-auto md:bottom-auto md:z-auto md:w-64 md:shrink-0 md:flex-col md:gap-5 md:overflow-y-auto md:border-l md:border-t-0 md:p-3 md:backdrop-blur-none',
+        'md:static md:inset-auto md:bottom-auto md:z-auto md:w-64 md:shrink-0 md:flex-col md:gap-0 md:overflow-hidden md:border-l md:border-t-0 md:p-3 md:backdrop-blur-none',
         isOver ? 'bg-accent-soft' : 'md:bg-surface/40',
       ].join(' ')}
     >
-      <div className="flex gap-2 md:flex-col md:gap-2">
-        <h2 className="hidden px-1 text-[13px] font-semibold text-text-secondary md:block">{t.calendar.backlog}</h2>
-        {backlogTasks.length === 0 && (
-          <p className="px-1 text-[12px] text-text-tertiary">{t.calendar.nothingUnscheduled}</p>
-        )}
-        {backlogTasks.map((task) => (
-          <DraggableTask
-            key={task.id}
-            task={task}
-            color={taskColor(task, projectColors)}
-            onClick={onTaskClick ? () => onTaskClick(task) : undefined}
-          />
-        ))}
+      <div className="flex gap-2 pb-3 md:min-h-0 md:max-h-[33%] md:flex-col md:gap-2 md:pb-0">
+        <h2 className="hidden shrink-0 px-1 text-[13px] font-semibold text-text-secondary md:block">
+          {t.calendar.backlog}
+        </h2>
+        <ScrollList>
+          {backlogTasks.length === 0 && (
+            <p className="px-1 text-[12px] text-text-tertiary">{t.calendar.nothingUnscheduled}</p>
+          )}
+          {backlogTasks.map((task) => (
+            <DraggableTask
+              key={task.id}
+              task={task}
+              color={taskColor(task, projectColors)}
+              onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+            />
+          ))}
+        </ScrollList>
       </div>
 
       {scheduledTasks.length > 0 && (
-        <div className="hidden flex-col gap-2 md:flex">
-          <h2 className="px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.scheduled}</h2>
-          {scheduledTasks
+        <div className="hidden flex-col gap-2 md:flex md:min-h-0 md:max-h-[33%] md:mt-3 md:border-t md:border-hairline md:pt-3">
+          <h2 className="shrink-0 px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.scheduled}</h2>
+          <ScrollList>
+            {scheduledTasks
+              .slice()
+              .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
+              .map((task) => (
+                <DraggableTask
+                  key={task.id}
+                  task={task}
+                  color={taskColor(task, projectColors)}
+                  onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+                  subtitle={
+                    task.due_at
+                      ? new Date(task.due_at).toLocaleString(locale, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })
+                      : undefined
+                  }
+                />
+              ))}
+          </ScrollList>
+        </div>
+      )}
+
+      <div className="hidden flex-col gap-2 md:flex md:min-h-0 md:max-h-[33%] md:mt-3 md:border-t md:border-hairline md:pt-3">
+        <h2 className="shrink-0 px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.meetings}</h2>
+        <div className="shrink-0">
+          <NewMeetingInline onCreate={onCreateMeeting} />
+        </div>
+        <ScrollList>
+          {meetingTasks
             .slice()
             .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
             .map((task) => (
@@ -120,33 +203,7 @@ export default function BacklogPanel({
                 }
               />
             ))}
-        </div>
-      )}
-
-      <div className="hidden flex-col gap-2 md:flex">
-        <h2 className="px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.meetings}</h2>
-        <NewMeetingInline onCreate={onCreateMeeting} />
-        {meetingTasks
-          .slice()
-          .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
-          .map((task) => (
-            <DraggableTask
-              key={task.id}
-              task={task}
-              color={taskColor(task, projectColors)}
-              onClick={onTaskClick ? () => onTaskClick(task) : undefined}
-              subtitle={
-                task.due_at
-                  ? new Date(task.due_at).toLocaleString(locale, {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })
-                  : undefined
-              }
-            />
-          ))}
+        </ScrollList>
       </div>
     </div>
   )

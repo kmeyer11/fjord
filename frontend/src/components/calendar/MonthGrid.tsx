@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useState } from 'react'
 import type { ExternalEvent, Task } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
-import { dateKey, getMonthGridDays, isSameDay } from '../../lib/date'
+import { dateKey, getMonthCells, isSameDay } from '../../lib/date'
 import { taskColor } from '../../lib/colors'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import Modal from '../Modal'
@@ -203,7 +203,22 @@ function DayOverviewModal({
   )
 }
 
-export default function MonthGrid({
+/** Mon–Sun labels — shared/sticky across all months in MonthScroller rather than repeated per month. */
+export function MonthWeekdayHeader() {
+  const { t } = useLanguage()
+  return (
+    <div className="grid grid-cols-7 border-b border-hairline bg-bg">
+      {t.weekdaysShort.map((label) => (
+        <div key={label} className="py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+          {label}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** One month's day grid, without its own weekday header — used standalone or stacked in MonthScroller. */
+export function MonthGridBody({
   monthDate,
   tasksByDay,
   externalByDay,
@@ -218,28 +233,21 @@ export default function MonthGrid({
   onTaskClick?: (task: Task) => void
   onExternalEventClick?: (event: ExternalEvent) => void
 }) {
-  const { t } = useLanguage()
-  const days = getMonthGridDays(monthDate)
+  const cells = getMonthCells(monthDate)
   const [expandedDay, setExpandedDay] = useState<Date | null>(null)
   const expandedKey = expandedDay ? dateKey(expandedDay) : null
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <div className="grid grid-cols-7 border-b border-hairline">
-        {t.weekdaysShort.map((label) => (
-          <div key={label} className="py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
-            {label}
-          </div>
-        ))}
-      </div>
-      <div className="grid flex-1 grid-cols-7" style={{ gridAutoRows: 'minmax(64px, 1fr)' }}>
-        {days.map((d) => {
+    <>
+      <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(64px, 1fr)' }}>
+        {cells.map((d, i) => {
+          if (!d) return <div key={`blank-${i}`} className="border-b border-l border-hairline bg-black/[0.02] first:border-l-0" />
           const key = dateKey(d)
           return (
             <MonthDayCell
               key={key}
               date={d}
-              inMonth={d.getMonth() === monthDate.getMonth()}
+              inMonth
               tasks={tasksByDay.get(key) ?? []}
               externalEvents={externalByDay.get(key) ?? []}
               projectColors={projectColors}
@@ -261,6 +269,6 @@ export default function MonthGrid({
           onExternalEventClick={onExternalEventClick}
         />
       )}
-    </div>
+    </>
   )
 }
