@@ -6,13 +6,16 @@ import { RepeatIcon } from '../icons'
 export const HOUR_HEIGHT = 48
 export const BLOCK_HEIGHT = 24
 
+// Rounded to a whole pixel — a fractional `top` (e.g. from a 9:07 due time)
+// renders fine in Chrome, but Safari can hit-test it a couple pixels off from
+// where it's painted, making the event's clickable area drift from its visual position.
 function topFor(date: Date) {
-  return (date.getHours() + date.getMinutes() / 60) * HOUR_HEIGHT
+  return Math.round((date.getHours() + date.getMinutes() / 60) * HOUR_HEIGHT)
 }
 
 export function CalendarTaskBlock({ task, color, onClick }: { task: Task; color: string; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `task-${task.id}`,
+    id: `week-task-${task.id}`,
     data: { task },
   })
   if (!task.due_at) return null
@@ -59,7 +62,7 @@ export function ExternalEventBlock({ event, onClick }: { event: ExternalEvent; o
         ...(color ? { backgroundColor: `${color}1f`, borderColor: `${color}80` } : undefined),
       }}
       className={[
-        'pointer-events-auto absolute inset-x-0.5 z-0 flex items-center gap-1 overflow-hidden rounded-md border border-dashed px-1.5 py-0.5 text-left text-[11px] text-text-secondary',
+        'pointer-events-auto absolute inset-x-0.5 z-0 flex cursor-pointer items-center gap-1 overflow-hidden rounded-md border border-dashed px-1.5 py-0.5 text-left text-[11px] text-text-secondary',
         color ? '' : 'border-text-tertiary/50 bg-surface/70',
       ].join(' ')}
       title={`${event.title} — ${event.calendar} (read-only)`}
@@ -78,7 +81,7 @@ export function AllDayTaskChip({ task, color, onClick }: { task: Task; color: st
       onClick={onClick}
       style={{ backgroundColor: `${color}1f`, color }}
       className={[
-        'flex w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium',
+        'flex w-full cursor-pointer items-center gap-1 truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium',
         task.status === 'done' ? 'opacity-50 line-through' : '',
       ].join(' ')}
     >
@@ -96,7 +99,7 @@ export function AllDayExternalEventChip({ event, onClick }: { event: ExternalEve
       onClick={onClick}
       style={color ? { backgroundColor: `${color}1f`, borderColor: `${color}80` } : undefined}
       className={[
-        'w-full truncate rounded border border-dashed px-1.5 py-0.5 text-left text-[11px] text-text-secondary',
+        'w-full cursor-pointer truncate rounded border border-dashed px-1.5 py-0.5 text-left text-[11px] text-text-secondary',
         color ? '' : 'border-text-tertiary/50 bg-surface/70',
       ].join(' ')}
       title={`${event.title} — ${event.calendar} (read-only)`}
