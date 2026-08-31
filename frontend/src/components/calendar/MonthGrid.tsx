@@ -8,7 +8,15 @@ import { taskColor } from '../../lib/colors'
 import { useIsDesktop } from '../../lib/useIsDesktop'
 import Modal from '../Modal'
 
-const MAX_VISIBLE_DESKTOP = 3
+const MAX_VISIBLE_DESKTOP = 5
+
+/** Mon–Fri get equal width; Sat/Sun are narrower, giving weekdays more room
+ * for event chips. Shared between the sticky header and every month body so
+ * columns stay aligned. Each track uses minmax(0, …) rather than a bare
+ * fr unit — otherwise a long event name (rendered nowrap for truncation)
+ * sets an implicit content-based minimum width on its column, so column
+ * widths would shift with whatever text happens to be in them that day. */
+export const MONTH_GRID_COLUMNS = 'repeat(5, minmax(0, 1fr)) minmax(0, 0.7fr) minmax(0, 0.7fr)'
 
 function MonthTaskChip({ task, color, onClick }: { task: Task; color: string; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -59,9 +67,14 @@ function MonthDayCell({
     data: { date, hour: 9 },
   })
   const isToday = isSameDay(date, new Date())
-  const shownExternal = Math.min(externalEvents.length, MAX_VISIBLE_DESKTOP)
-  const shownTasks = Math.min(tasks.length, MAX_VISIBLE_DESKTOP)
-  const overflow = externalEvents.length + tasks.length - shownExternal - shownTasks
+  // Total lines (chips + a "+N more" row, if any) are capped at MAX_VISIBLE_DESKTOP so a
+  // cell's content always fits its fixed row height — never grows it, which used to make
+  // whole weeks jump around as events/meetings were added.
+  const total = externalEvents.length + tasks.length
+  const slots = total > MAX_VISIBLE_DESKTOP ? MAX_VISIBLE_DESKTOP - 1 : MAX_VISIBLE_DESKTOP
+  const shownExternal = Math.min(externalEvents.length, slots)
+  const shownTasks = Math.min(tasks.length, slots - shownExternal)
+  const overflow = total - shownExternal - shownTasks
 
   return (
     <div
@@ -73,7 +86,7 @@ function MonthDayCell({
     >
       <span
         className={[
-          'flex size-5 items-center justify-center rounded-full text-[11px] font-semibold md:size-6 md:text-[12px]',
+          'flex size-4 items-center justify-center rounded-full text-[10px] font-semibold md:size-5 md:text-[11px]',
           isToday ? 'bg-accent text-bg' : inMonth ? 'text-text' : 'text-text-tertiary',
         ].join(' ')}
       >
@@ -82,7 +95,7 @@ function MonthDayCell({
 
       {isDesktop ? (
         <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
-          {externalEvents.slice(0, MAX_VISIBLE_DESKTOP).map((e) => (
+          {externalEvents.slice(0, shownExternal).map((e) => (
             <button
               key={e.id}
               type="button"
@@ -97,7 +110,7 @@ function MonthDayCell({
               {e.title}
             </button>
           ))}
-          {tasks.slice(0, MAX_VISIBLE_DESKTOP).map((t) => (
+          {tasks.slice(0, shownTasks).map((t) => (
             <MonthTaskChip
               key={t.id}
               task={t}
@@ -109,7 +122,7 @@ function MonthDayCell({
             <button
               type="button"
               onClick={onShowMore}
-              className="px-1 text-left text-[10px] font-medium text-text-tertiary hover:text-text-secondary hover:underline"
+              className="rounded px-1 py-0.5 text-left text-[10px] font-medium text-text-tertiary hover:text-text-secondary hover:underline"
             >
               {t.calendar.moreCount(overflow)}
             </button>
@@ -207,7 +220,7 @@ function DayOverviewModal({
 export function MonthWeekdayHeader() {
   const { t } = useLanguage()
   return (
-    <div className="grid grid-cols-7 border-b border-hairline bg-bg">
+    <div className="grid border-b border-hairline bg-bg" style={{ gridTemplateColumns: MONTH_GRID_COLUMNS }}>
       {t.weekdaysShort.map((label) => (
         <div key={label} className="py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
           {label}
@@ -239,7 +252,7 @@ export function MonthGridBody({
 
   return (
     <>
-      <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(64px, 1fr)' }}>
+      <div className="grid auto-rows-[64px] md:auto-rows-[156px]" style={{ gridTemplateColumns: MONTH_GRID_COLUMNS }}>
         {cells.map((d, i) => {
           if (!d) return <div key={`blank-${i}`} className="border-b border-l border-hairline bg-black/[0.02] first:border-l-0" />
           const key = dateKey(d)
