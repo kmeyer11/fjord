@@ -20,7 +20,7 @@ export const MONTH_GRID_COLUMNS = 'repeat(5, minmax(0, 1fr)) minmax(0, 0.7fr) mi
 
 function MonthTaskChip({ task, color, onClick }: { task: Task; color: string; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `task-${task.id}`,
+    id: `month-task-${task.id}`,
     data: { task },
   })
   return (
@@ -31,7 +31,7 @@ function MonthTaskChip({ task, color, onClick }: { task: Task; color: string; on
       onClick={onClick}
       style={{ backgroundColor: `${color}1f`, color, transform: CSS.Translate.toString(transform) }}
       className={[
-        'touch-none truncate rounded px-1 py-0.5 text-left text-[10px] font-medium',
+        'touch-none cursor-pointer truncate rounded px-1 py-0.5 text-left text-[10px] font-medium',
         isDragging ? 'z-10 opacity-60' : '',
         task.status === 'done' ? 'opacity-50 line-through' : '',
       ].join(' ')}
@@ -102,7 +102,7 @@ function MonthDayCell({
               onClick={onExternalEventClick ? () => onExternalEventClick(e) : undefined}
               style={e.calendar_color ? { backgroundColor: `${e.calendar_color}1f`, borderColor: `${e.calendar_color}80` } : undefined}
               className={[
-                'truncate rounded border border-dashed px-1 py-0.5 text-left text-[10px] text-text-secondary',
+                'cursor-pointer truncate rounded border border-dashed px-1 py-0.5 text-left text-[10px] text-text-secondary',
                 e.calendar_color ? '' : 'border-text-tertiary/50',
               ].join(' ')}
               title={`${e.title} — ${e.calendar} (read-only)`}
