@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import Logo from './components/Logo'
 import Calendar from './pages/Calendar'
 import Dashboard from './pages/Dashboard'
+import Home from './pages/Home'
 import Login from './pages/Login'
 import ProjectBoard from './pages/ProjectBoard'
 import Settings from './pages/Settings'
@@ -52,7 +53,8 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/projects" element={<Dashboard />} />
         <Route path="/projects/:projectId" element={<ProjectBoard />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/settings" element={<Settings />} />

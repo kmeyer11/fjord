@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import Logo from './Logo'
 import Switch from './Switch'
@@ -34,7 +34,7 @@ function LanguageToggle() {
 export default function Layout() {
   const { t } = useLanguage()
   const navItems = [
-    { to: '/', label: t.nav.projects, icon: GridIcon, end: true },
+    { to: '/projects', label: t.nav.projects, icon: GridIcon, end: true },
     { to: '/calendar', label: t.nav.calendar, icon: CalendarIcon, end: false },
     { to: '/settings', label: t.nav.settings, icon: GearIcon, end: false },
   ]
@@ -42,10 +42,10 @@ export default function Layout() {
   return (
     <div className="flex h-full flex-col md:flex-row">
       <nav className="hidden w-52 shrink-0 flex-col gap-6 border-r border-hairline bg-surface/60 p-4 backdrop-blur-xl md:flex">
-        <div className="flex items-center gap-2 px-1">
+        <Link to="/" className="flex items-center gap-2 px-1">
           <Logo className="size-6" />
           <span className="text-[15px] font-semibold tracking-tight text-text">Fjord</span>
-        </div>
+        </Link>
         <div className="flex flex-col gap-0.5">
           {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => sidebarLinkClasses(isActive)}>
@@ -61,8 +61,10 @@ export default function Layout() {
       </nav>
 
       <header className="flex items-center gap-2 border-b border-hairline bg-surface/70 px-4 py-3 backdrop-blur-xl md:hidden">
-        <Logo className="size-[22px]" />
-        <span className="text-[17px] font-semibold tracking-tight text-text">Fjord</span>
+        <Link to="/" className="flex items-center gap-2">
+          <Logo className="size-[22px]" />
+          <span className="text-[17px] font-semibold tracking-tight text-text">Fjord</span>
+        </Link>
         <div className="ml-auto">
           <LanguageToggle />
         </div>
