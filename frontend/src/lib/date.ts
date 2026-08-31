@@ -37,15 +37,34 @@ export function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
-/** Every day shown in a month grid — full Monday-start weeks covering the month,
- * so it includes a few leading/trailing days from adjacent months. */
-export function getMonthGridDays(monthDate: Date): Date[] {
-  const gridStart = startOfWeek(startOfMonth(monthDate))
-  const lastOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
-  const gridEnd = addDays(startOfWeek(lastOfMonth), 6)
-  const days: Date[] = []
-  for (let d = gridStart; d <= gridEnd; d = addDays(d, 1)) days.push(d)
-  return days
+/** Month-start `months` away from `date` (which should itself be a month-start). */
+export function addMonths(date: Date, months: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1)
+}
+
+export function isSameMonth(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth()
+}
+
+/**
+ * Cells for one month's Monday-start grid — `null` for the leading/trailing
+ * blanks that round the month out to full weeks, real dates for the days of
+ * that month only. Unlike padding with the adjacent month's actual dates,
+ * this is what MonthScroller needs: stacking several months back to back
+ * with real adjacent-month dates would show the same date twice, once as
+ * trailing padding in one month and again as the real day in the next.
+ */
+export function getMonthCells(monthDate: Date): (Date | null)[] {
+  const first = startOfMonth(monthDate)
+  const leadingBlanks = (first.getDay() + 6) % 7 // Monday-start offset
+  const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate()
+
+  const cells: (Date | null)[] = new Array(leadingBlanks).fill(null)
+  for (let day = 1; day <= daysInMonth; day++) cells.push(new Date(monthDate.getFullYear(), monthDate.getMonth(), day))
+
+  const trailingBlanks = (7 - (cells.length % 7)) % 7
+  cells.push(...new Array(trailingBlanks).fill(null))
+  return cells
 }
 
 export function formatMonth(date: Date, locale: string): string {

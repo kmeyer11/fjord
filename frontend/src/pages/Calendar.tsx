@@ -6,19 +6,11 @@ import BacklogPanel, { BACKLOG_DROP_ID } from '../components/calendar/BacklogPan
 import CalendarBody from '../components/calendar/CalendarBody'
 import CalendarHeader, { type CalendarViewMode } from '../components/calendar/CalendarHeader'
 import MobileDaySelector from '../components/calendar/MobileDaySelector'
-import MonthGrid from '../components/calendar/MonthGrid'
+import MonthScroller from '../components/calendar/MonthScroller'
 import ExternalEventDetailModal from '../components/ExternalEventDetailModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
-import {
-  addDays,
-  dateKey,
-  formatMonth,
-  formatWeekRange,
-  getMonthGridDays,
-  startOfMonth,
-  startOfWeek,
-} from '../lib/date'
+import { addDays, addMonths, dateKey, formatMonth, formatWeekRange, startOfMonth, startOfWeek } from '../lib/date'
 import { useIsDesktop } from '../lib/useIsDesktop'
 
 export default function Calendar() {
@@ -27,6 +19,9 @@ export default function Calendar() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [monthDate, setMonthDate] = useState(() => startOfMonth(new Date()))
+  // Range of months MonthScroller actually has rendered — it grows as the
+  // user scrolls, so external events are fetched for whatever that is.
+  const [monthRange, setMonthRange] = useState<[Date, Date] | null>(null)
 
   const [projects, setProjects] = useState<ProjectWithCounts[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
@@ -53,19 +48,22 @@ export default function Calendar() {
   useEffect(reloadTasks, [])
 
   useEffect(() => {
-    const [rangeStart, rangeEnd] =
-      viewMode === 'week'
-        ? [weekStart, addDays(weekStart, 7)]
-        : (() => {
-            const days = getMonthGridDays(monthDate)
-            return [days[0], addDays(days[days.length - 1], 1)]
-          })()
-
+    // Month view scrolls continuously (see MonthScroller) and grows the
+    // rendered range as the user scrolls — fetch events for whatever range
+    // it reports rather than just the active month.
+    if (viewMode === 'week') {
+      api
+        .listExternalEvents(weekStart, addDays(weekStart, 7))
+        .then(setExternalEvents)
+        .catch(() => setExternalEvents([]))
+      return
+    }
+    if (!monthRange) return
     api
-      .listExternalEvents(rangeStart, rangeEnd)
+      .listExternalEvents(monthRange[0], monthRange[1])
       .then(setExternalEvents)
       .catch(() => setExternalEvents([]))
-  }, [viewMode, weekStart, monthDate])
+  }, [viewMode, weekStart, monthRange])
 
   function goToWeek(newStart: Date) {
     const offset = (selectedDate.getDay() + 6) % 7 // Monday-indexed offset within the week
@@ -167,8 +165,8 @@ export default function Calendar() {
             weekStart={weekStart}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            onPrev={() => (viewMode === 'week' ? goToWeek(addDays(weekStart, -7)) : goToMonth(addDays(monthDate, -1)))}
-            onNext={() => (viewMode === 'week' ? goToWeek(addDays(weekStart, 7)) : goToMonth(addDays(monthDate, 32)))}
+            onPrev={() => (viewMode === 'week' ? goToWeek(addDays(weekStart, -7)) : goToMonth(addMonths(monthDate, -1)))}
+            onNext={() => (viewMode === 'week' ? goToWeek(addDays(weekStart, 7)) : goToMonth(addMonths(monthDate, 1)))}
           />
           {viewMode === 'week' && (
             <MobileDaySelector weekStart={weekStart} selected={selectedDate} onSelect={setSelectedDate} />
@@ -183,8 +181,10 @@ export default function Calendar() {
               onExternalEventClick={setViewingExternalEvent}
             />
           ) : (
-            <MonthGrid
-              monthDate={monthDate}
+            <MonthScroller
+              activeMonth={monthDate}
+              onActiveMonthChange={goToMonth}
+              onRangeChange={(start, end) => setMonthRange([start, end])}
               tasksByDay={tasksByDay}
               externalByDay={externalByDay}
               projectColors={projectColors}
