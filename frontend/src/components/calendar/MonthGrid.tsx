@@ -79,9 +79,11 @@ function MonthDayCell({
   return (
     <div
       ref={setNodeRef}
+      onClick={!isDesktop ? onShowMore : undefined}
       className={[
         'flex min-h-0 flex-col gap-1 border-b border-l border-hairline p-1.5 first:border-l-0 md:p-2',
         isOver ? 'bg-accent-soft' : inMonth ? '' : 'bg-black/[0.02]',
+        !isDesktop ? 'cursor-pointer' : '',
       ].join(' ')}
     >
       <span
