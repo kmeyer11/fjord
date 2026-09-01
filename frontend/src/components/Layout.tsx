@@ -1,14 +1,51 @@
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { api } from '../api/client'
+import type { ProjectWithCounts } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import Logo from './Logo'
 import Switch from './Switch'
-import { CalendarIcon, GearIcon, GlobeIcon, GridIcon } from './icons'
+import { CalendarIcon, GearIcon, GlobeIcon, GridIcon, StarIcon } from './icons'
 
 function sidebarLinkClasses(isActive: boolean) {
   return [
     'flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors',
     isActive ? 'bg-accent-soft text-accent-strong' : 'text-text-secondary hover:bg-black/[0.04] hover:text-text',
   ].join(' ')
+}
+
+function favoriteLinkClasses(isActive: boolean) {
+  return [
+    'flex items-center gap-2 rounded-lg py-1.5 pl-8 pr-3 text-[13px] font-medium transition-colors',
+    isActive ? 'bg-accent-soft text-accent-strong' : 'text-text-secondary hover:bg-black/[0.04] hover:text-text',
+  ].join(' ')
+}
+
+function useFavoriteProjects() {
+  const [projects, setProjects] = useState<ProjectWithCounts[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    function reload() {
+      api
+        .listProjects()
+        .then((all) => {
+          if (!cancelled) setProjects(all.filter((p) => p.favorite))
+        })
+        .catch(() => {
+          // Sidebar favorites are a convenience shortcut — silently skip on failure,
+          // the Projects page itself already surfaces any real error.
+        })
+    }
+    reload()
+    window.addEventListener('fjord:projects-changed', reload)
+    return () => {
+      cancelled = true
+      window.removeEventListener('fjord:projects-changed', reload)
+    }
+  }, [])
+
+  return projects
 }
 
 function tabLinkClasses(isActive: boolean) {
@@ -33,6 +70,7 @@ function LanguageToggle() {
 
 export default function Layout() {
   const { t } = useLanguage()
+  const favoriteProjects = useFavoriteProjects()
   const navItems = [
     { to: '/projects', label: t.nav.projects, icon: GridIcon, end: true },
     { to: '/calendar', label: t.nav.calendar, icon: CalendarIcon, end: false },
@@ -48,10 +86,22 @@ export default function Layout() {
         </Link>
         <div className="flex flex-col gap-0.5">
           {navItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} className={({ isActive }) => sidebarLinkClasses(isActive)}>
-              <Icon className="size-[18px]" />
-              {label}
-            </NavLink>
+            <div key={to}>
+              <NavLink to={to} end={end} className={({ isActive }) => sidebarLinkClasses(isActive)}>
+                <Icon className="size-[18px]" />
+                {label}
+              </NavLink>
+              {to === '/projects' && favoriteProjects.length > 0 && (
+                <div className="mt-0.5 flex flex-col gap-0.5">
+                  {favoriteProjects.map((p) => (
+                    <NavLink key={p.id} to={`/projects/${p.id}`} className={({ isActive }) => favoriteLinkClasses(isActive)}>
+                      <StarIcon className="size-3.5 shrink-0 text-amber-400" filled />
+                      <span className="truncate">{p.name}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
 

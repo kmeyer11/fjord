@@ -50,6 +50,7 @@ class Project(Base):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     color: Mapped[str] = mapped_column(String(7), nullable=False, default="#3c6e90")
     archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    favorite: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     tasks: Mapped[list["Task"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"

@@ -88,6 +88,14 @@ export function RepeatIcon({ className }: IconProps) {
   )
 }
 
+export function StarIcon({ className, filled }: IconProps & { filled?: boolean }) {
+  return (
+    <svg {...base} fill={filled ? 'currentColor' : 'none'} className={className}>
+      <path d="M12 3.5l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6-4.4-4.2 6-.8Z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

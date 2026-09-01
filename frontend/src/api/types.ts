@@ -14,6 +14,7 @@ export interface Project {
   name: string
   color: string
   archived: boolean
+  favorite: boolean
 }
 
 export interface ProjectWithCounts extends Project {

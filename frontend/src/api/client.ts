@@ -36,7 +36,7 @@ export const api = {
   getProject: (id: number) => request<ProjectWithCounts>(`/projects/${id}`),
   createProject: (data: { name: string; color: string }) =>
     request<ProjectWithCounts>('/projects', { method: 'POST', body: JSON.stringify(data) }),
-  updateProject: (id: number, data: Partial<Pick<Project, 'name' | 'color' | 'archived'>>) =>
+  updateProject: (id: number, data: Partial<Pick<Project, 'name' | 'color' | 'archived' | 'favorite'>>) =>
     request<ProjectWithCounts>(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteProject: (id: number) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
 
