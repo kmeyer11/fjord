@@ -123,8 +123,7 @@ export default function BacklogPanel({
     <div
       ref={setNodeRef}
       className={[
-        'fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 flex gap-2 overflow-x-auto border-t border-hairline bg-surface/90 p-2.5 backdrop-blur-xl transition-colors',
-        'md:static md:inset-auto md:bottom-auto md:z-auto md:w-64 md:shrink-0 md:flex-col md:gap-0 md:overflow-hidden md:border-l md:border-t-0 md:p-3 md:backdrop-blur-none',
+        'hidden md:flex md:static md:inset-auto md:bottom-auto md:z-auto md:w-64 md:shrink-0 md:flex-col md:gap-0 md:overflow-hidden md:border-l md:border-t-0 md:p-3 md:backdrop-blur-none',
         isOver ? 'bg-accent-soft' : 'md:bg-surface/40',
       ].join(' ')}
     >
