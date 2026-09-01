@@ -14,6 +14,8 @@ const en = {
     backlog: 'backlog',
     scheduled: 'scheduled',
     done: 'done',
+    favorite: 'Add to favorites',
+    unfavorite: 'Remove from favorites',
   },
 
   newProjectModal: {
@@ -144,6 +146,8 @@ const da: typeof en = {
     backlog: 'backlog',
     scheduled: 'planlagt',
     done: 'færdig',
+    favorite: 'Tilføj til favoritter',
+    unfavorite: 'Fjern fra favoritter',
   },
 
   newProjectModal: {

@@ -5,7 +5,7 @@ import { api } from '../api/client'
 import type { ProjectWithCounts, Task, TaskStatus } from '../api/types'
 import BoardColumn from '../components/BoardColumn'
 import EditProjectModal from '../components/EditProjectModal'
-import { ChevronLeftIcon, PencilIcon, PlusIcon } from '../components/icons'
+import { ChevronLeftIcon, PencilIcon, PlusIcon, StarIcon } from '../components/icons'
 import NewTaskModal from '../components/NewTaskModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -81,6 +81,20 @@ export default function ProjectBoard() {
           style={{ backgroundColor: project.color, boxShadow: `0 0 0 4px ${project.color}26` }}
         />
         <h1 className="text-[20px] font-bold tracking-tight text-text">{project.name}</h1>
+        <button
+          onClick={async () => {
+            const updated = await api.updateProject(id, { favorite: !project.favorite })
+            setProject(updated)
+            window.dispatchEvent(new Event('fjord:projects-changed'))
+          }}
+          aria-label={project.favorite ? t.dashboard.unfavorite : t.dashboard.favorite}
+          className={[
+            'rounded-full p-1.5 transition-colors hover:bg-black/[0.04]',
+            project.favorite ? 'text-amber-400' : 'text-text-tertiary hover:text-text-secondary',
+          ].join(' ')}
+        >
+          <StarIcon className="size-4" filled={project.favorite} />
+        </button>
         <button
           onClick={() => setEditingProject(true)}
           aria-label={t.editProjectModal.title}

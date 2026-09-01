@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom'
 import type { ProjectWithCounts } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
+import { StarIcon } from './icons'
 
-export default function ProjectCard({ project }: { project: ProjectWithCounts }) {
+export default function ProjectCard({
+  project,
+  onToggleFavorite,
+}: {
+  project: ProjectWithCounts
+  onToggleFavorite: () => void
+}) {
   const { t } = useLanguage()
   const total = project.task_counts.backlog + project.task_counts.scheduled + project.task_counts.done
 
@@ -16,7 +23,23 @@ export default function ProjectCard({ project }: { project: ProjectWithCounts })
         style={{ background: `radial-gradient(120px 90px at 0% 0%, ${project.color}, transparent)` }}
       />
 
-      <div className="relative flex items-center gap-2.5">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onToggleFavorite()
+        }}
+        aria-label={project.favorite ? t.dashboard.unfavorite : t.dashboard.favorite}
+        className={[
+          'absolute right-3 top-3 z-10 rounded-full p-1 transition-colors',
+          project.favorite ? 'text-amber-400' : 'text-text-tertiary/60 hover:text-text-tertiary',
+        ].join(' ')}
+      >
+        <StarIcon className="size-[18px]" filled={project.favorite} />
+      </button>
+
+      <div className="relative flex items-center gap-2.5 pr-6">
         <span
           className="size-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: project.color, boxShadow: `0 0 0 4px ${project.color}26` }}

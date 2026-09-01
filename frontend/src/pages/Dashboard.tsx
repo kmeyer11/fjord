@@ -47,7 +47,23 @@ export default function Dashboard() {
       {projects && projects.length > 0 && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => (
-            <ProjectCard key={p.id} project={p} />
+            <ProjectCard
+              key={p.id}
+              project={p}
+              onToggleFavorite={async () => {
+                setProjects((prev) =>
+                  prev ? prev.map((proj) => (proj.id === p.id ? { ...proj, favorite: !proj.favorite } : proj)) : prev,
+                )
+                try {
+                  await api.updateProject(p.id, { favorite: !p.favorite })
+                  reload()
+                  window.dispatchEvent(new Event('fjord:projects-changed'))
+                } catch (e) {
+                  setError(String(e))
+                  reload()
+                }
+              }}
+            />
           ))}
         </div>
       )}

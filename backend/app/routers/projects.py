@@ -28,7 +28,8 @@ def list_projects(include_archived: bool = False, db: Session = Depends(get_db))
     query = db.query(models.Project)
     if not include_archived:
         query = query.filter(models.Project.archived.is_(False))
-    return [_with_counts(p) for p in query.order_by(models.Project.id).all()]
+    query = query.order_by(models.Project.favorite.desc(), models.Project.id)
+    return [_with_counts(p) for p in query.all()]
 
 
 @router.post("", response_model=schemas.ProjectWithCounts, status_code=201)

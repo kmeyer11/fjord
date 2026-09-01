@@ -15,6 +15,7 @@ class ProjectBase(BaseModel):
     name: str
     color: str = "#3c6e90"
     archived: bool = False
+    favorite: bool = False
 
 
 class ProjectCreate(ProjectBase):
@@ -25,6 +26,7 @@ class ProjectUpdate(BaseModel):
     name: str | None = None
     color: str | None = None
     archived: bool | None = None
+    favorite: bool | None = None
 
 
 class Project(ProjectBase):
