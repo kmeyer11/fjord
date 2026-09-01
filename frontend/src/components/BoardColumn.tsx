@@ -17,24 +17,28 @@ export default function BoardColumn({
   onTaskClick?: (task: Task) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
+  const dense = tasks.length > DENSE_THRESHOLD
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col md:w-72">
+    <div className="flex flex-col md:min-h-0 md:flex-1 md:w-72">
       <h2 className="mb-2 flex items-center gap-1.5 px-1 text-[13px] font-semibold text-text-secondary">
         {title} <span className="text-text-tertiary">{tasks.length}</span>
       </h2>
       <div
         ref={setNodeRef}
         className={[
-          'flex min-h-24 flex-1 flex-col gap-2 rounded-2xl border p-2 transition-colors',
+          'flex min-h-24 flex-1 flex-col overflow-y-auto rounded-2xl border p-2 transition-colors md:min-h-0',
+          dense ? 'gap-1' : 'gap-2',
           isOver ? 'border-accent/40 bg-accent-soft' : 'border-hairline bg-black/[0.02]',
         ].join(' ')}
       >
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onClick={onTaskClick ? () => onTaskClick(task) : undefined} />
+          <TaskCard key={task.id} task={task} dense={dense} onClick={onTaskClick ? () => onTaskClick(task) : undefined} />
         ))}
         {footer}
       </div>
     </div>
   )
 }
+
+const DENSE_THRESHOLD = 8
