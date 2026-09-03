@@ -55,6 +55,31 @@ function ScrollList({ children }: { children: ReactNode }) {
   )
 }
 
+function SectionHeader({
+  title,
+  expanded,
+  onToggle,
+}: {
+  title: string
+  expanded: boolean
+  onToggle: () => void
+}) {
+  const { t } = useLanguage()
+  return (
+    <div className="flex shrink-0 items-center justify-between gap-2 px-1">
+      <h2 className="text-[13px] font-semibold text-text-secondary">{title}</h2>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={expanded ? t.calendar.collapseSection : t.calendar.expandSection}
+        className="-m-1 flex size-6 shrink-0 items-center justify-center rounded text-text-tertiary hover:bg-hairline/40 hover:text-text-secondary"
+      >
+        <ChevronDownIcon className={['size-3.5 transition-transform', expanded ? '' : '-rotate-90'].join(' ')} />
+      </button>
+    </div>
+  )
+}
+
 function DraggableTask({
   task,
   color,
@@ -118,6 +143,17 @@ export default function BacklogPanel({
 }) {
   const { t, locale } = useLanguage()
   const { setNodeRef, isOver } = useDroppable({ id: BACKLOG_DROP_ID })
+  // Meetings is the most-used section, so it always gets the top half of the
+  // panel and starts open. Backlog and Scheduled share the bottom half (and
+  // don't render at all when empty — see below); both start open too, but
+  // collapsing one lets the other grow into the freed space (flex-1 vs.
+  // shrink-to-header below).
+  const [meetingsOpen, setMeetingsOpen] = useState(true)
+  const [backlogOpen, setBacklogOpen] = useState(true)
+  const [scheduledOpen, setScheduledOpen] = useState(true)
+
+  const showBacklog = backlogTasks.length > 0
+  const showScheduled = scheduledTasks.length > 0
 
   return (
     <div
@@ -127,83 +163,111 @@ export default function BacklogPanel({
         isOver ? 'bg-accent-soft' : 'md:bg-surface/40',
       ].join(' ')}
     >
-      <div className="flex gap-2 pb-3 md:min-h-0 md:max-h-[33%] md:flex-col md:gap-2 md:pb-0">
-        <h2 className="hidden shrink-0 px-1 text-[13px] font-semibold text-text-secondary md:block">
-          {t.calendar.backlog}
-        </h2>
-        <ScrollList>
-          {backlogTasks.length === 0 && (
-            <p className="px-1 text-[12px] text-text-tertiary">{t.calendar.nothingUnscheduled}</p>
-          )}
-          {backlogTasks.map((task) => (
-            <DraggableTask
-              key={task.id}
-              task={task}
-              color={taskColor(task, projectColors)}
-              onClick={onTaskClick ? () => onTaskClick(task) : undefined}
-            />
-          ))}
-        </ScrollList>
+      <div className="flex flex-col gap-2 md:min-h-0 md:flex-1">
+        <SectionHeader title={t.calendar.meetings} expanded={meetingsOpen} onToggle={() => setMeetingsOpen((v) => !v)} />
+        {meetingsOpen && (
+          <>
+            <div className="shrink-0">
+              <NewMeetingInline onCreate={onCreateMeeting} />
+            </div>
+            <ScrollList>
+              {meetingTasks
+                .slice()
+                .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
+                .map((task) => (
+                  <DraggableTask
+                    key={task.id}
+                    task={task}
+                    color={taskColor(task, projectColors)}
+                    onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+                    subtitle={
+                      task.due_at
+                        ? new Date(task.due_at).toLocaleString(locale, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })
+                        : undefined
+                    }
+                  />
+                ))}
+            </ScrollList>
+          </>
+        )}
       </div>
 
-      {scheduledTasks.length > 0 && (
-        <div className="hidden flex-col gap-2 md:flex md:min-h-0 md:max-h-[33%] md:mt-3 md:border-t md:border-hairline md:pt-3">
-          <h2 className="shrink-0 px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.scheduled}</h2>
-          <ScrollList>
-            {scheduledTasks
-              .slice()
-              .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
-              .map((task) => (
-                <DraggableTask
-                  key={task.id}
-                  task={task}
-                  color={taskColor(task, projectColors)}
-                  onClick={onTaskClick ? () => onTaskClick(task) : undefined}
-                  subtitle={
-                    task.due_at
-                      ? new Date(task.due_at).toLocaleString(locale, {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })
-                      : undefined
-                  }
-                />
-              ))}
-          </ScrollList>
+      {(showBacklog || showScheduled) && (
+        <div className="flex flex-col md:min-h-0 md:flex-1 md:mt-3 md:border-t md:border-hairline md:pt-3">
+          {showBacklog && (
+            <div
+              className={[
+                'flex flex-col gap-2 md:min-h-0',
+                backlogOpen ? 'md:flex-1' : 'md:shrink-0',
+              ].join(' ')}
+            >
+              <SectionHeader
+                title={t.calendar.backlog}
+                expanded={backlogOpen}
+                onToggle={() => setBacklogOpen((v) => !v)}
+              />
+              {backlogOpen && (
+                <ScrollList>
+                  {backlogTasks.map((task) => (
+                    <DraggableTask
+                      key={task.id}
+                      task={task}
+                      color={taskColor(task, projectColors)}
+                      onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+                    />
+                  ))}
+                </ScrollList>
+              )}
+            </div>
+          )}
+
+          {showScheduled && (
+            <div
+              className={[
+                'flex flex-col gap-2 md:min-h-0',
+                scheduledOpen ? 'md:flex-1' : 'md:shrink-0',
+                showBacklog ? 'md:mt-3 md:border-t md:border-hairline md:pt-3' : '',
+              ].join(' ')}
+            >
+              <SectionHeader
+                title={t.calendar.scheduled}
+                expanded={scheduledOpen}
+                onToggle={() => setScheduledOpen((v) => !v)}
+              />
+              {scheduledOpen && (
+                <ScrollList>
+                  {scheduledTasks
+                    .slice()
+                    .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
+                    .map((task) => (
+                      <DraggableTask
+                        key={task.id}
+                        task={task}
+                        color={taskColor(task, projectColors)}
+                        onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+                        subtitle={
+                          task.due_at
+                            ? new Date(task.due_at).toLocaleString(locale, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })
+                            : undefined
+                        }
+                      />
+                    ))}
+                </ScrollList>
+              )}
+            </div>
+          )}
         </div>
       )}
-
-      <div className="hidden flex-col gap-2 md:flex md:min-h-0 md:max-h-[33%] md:mt-3 md:border-t md:border-hairline md:pt-3">
-        <h2 className="shrink-0 px-1 text-[13px] font-semibold text-text-secondary">{t.calendar.meetings}</h2>
-        <div className="shrink-0">
-          <NewMeetingInline onCreate={onCreateMeeting} />
-        </div>
-        <ScrollList>
-          {meetingTasks
-            .slice()
-            .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
-            .map((task) => (
-              <DraggableTask
-                key={task.id}
-                task={task}
-                color={taskColor(task, projectColors)}
-                onClick={onTaskClick ? () => onTaskClick(task) : undefined}
-                subtitle={
-                  task.due_at
-                    ? new Date(task.due_at).toLocaleString(locale, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })
-                    : undefined
-                }
-              />
-            ))}
-        </ScrollList>
-      </div>
     </div>
   )
 }

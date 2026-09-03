@@ -1,4 +1,4 @@
-import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, PointerSensor, TouchSensor, pointerWithin, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { ExternalEvent, ProjectWithCounts, Task } from '../api/types'
@@ -157,7 +157,7 @@ export default function Calendar() {
   const label = viewMode === 'week' ? formatWeekRange(weekStart, locale) : formatMonth(monthDate, locale)
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
       <div className="flex h-full">
         <div className="flex min-h-0 flex-1 flex-col">
           <CalendarHeader
