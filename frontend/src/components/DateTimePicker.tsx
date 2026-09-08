@@ -176,6 +176,76 @@ function DatePanel({ selected, onSelect }: { selected: Date | null; onSelect: (d
   )
 }
 
+function pickerChipClass(active: boolean, chipClassName: string): string {
+  return [
+    'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[13px] font-medium text-text outline-none transition-colors disabled:opacity-50',
+    active ? 'border-accent bg-accent-soft' : `border-hairline ${chipClassName} hover:bg-black/[0.03]`,
+  ].join(' ')
+}
+
+/**
+ * The quarter-hour picker on its own — a chip button that opens the same
+ * floating time list `DateTimePicker` uses, extracted so a caller that only
+ * needs a time (no date), like the recurring-series editor, can reuse it
+ * instead of re-implementing the list. `open`/`onOpenChange` are controlled
+ * by the caller so it can coordinate with a sibling panel (DateTimePicker
+ * keeps its date and time panels mutually exclusive this way).
+ */
+export function TimePicker({
+  value,
+  onChange,
+  open,
+  onOpenChange,
+  disabled,
+  ariaLabel,
+  placeholder,
+  chipClassName = 'bg-surface',
+}: {
+  value: { hour: number; minute: number } | null
+  onChange: (hour: number, minute: number) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  disabled?: boolean
+  ariaLabel?: string
+  placeholder: string
+  chipClassName?: string
+}) {
+  const { locale } = useLanguage()
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const selected = value ? new Date(2000, 0, 1, value.hour, value.minute) : null
+  const label = selected ? selected.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }) : placeholder
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        disabled={disabled}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        onClick={() => onOpenChange(!open)}
+        className={pickerChipClass(open, chipClassName)}
+      >
+        <ClockIcon className="size-4 shrink-0 text-text-tertiary" />
+        {label}
+      </button>
+      {open && (
+        <FloatingPanel anchorRef={btnRef} onClose={() => onOpenChange(false)} widthClass="w-44">
+          <TimePanel
+            selected={selected}
+            onSelect={(hour, minute) => {
+              onChange(hour, minute)
+              onOpenChange(false)
+              btnRef.current?.focus()
+            }}
+          />
+        </FloatingPanel>
+      )}
+    </>
+  )
+}
+
 function TimePanel({ selected, onSelect }: { selected: Date | null; onSelect: (hour: number, minute: number) => void }) {
   const { locale } = useLanguage()
   const selectedRef = useRef<HTMLButtonElement>(null)
@@ -234,7 +304,6 @@ export default function DateTimePicker({
   const { t, locale } = useLanguage()
   const [openPanel, setOpenPanel] = useState<'date' | 'time' | null>(null)
   const dateBtnRef = useRef<HTMLButtonElement>(null)
-  const timeBtnRef = useRef<HTMLButtonElement>(null)
 
   // A panel left open across an all-day toggle would otherwise reappear were
   // the toggle flipped back, without the user having clicked anything.
@@ -259,20 +328,11 @@ export default function DateTimePicker({
     const next = new Date(baseline)
     next.setHours(hour, minute, 0, 0)
     onChange(formatValue(next, false))
-    setOpenPanel(null)
-    timeBtnRef.current?.focus()
   }
 
   const dateLabel = selected
     ? selected.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })
     : t.calendar.pickDate
-  const timeLabel = selected ? selected.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }) : t.calendar.pickTime
-
-  const chip = (active: boolean) =>
-    [
-      'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[13px] font-medium text-text outline-none transition-colors disabled:opacity-50',
-      active ? 'border-accent bg-accent-soft' : `border-hairline ${chipClassName} hover:bg-black/[0.03]`,
-    ].join(' ')
 
   return (
     <div className="flex gap-1.5" role="group" aria-label={ariaLabel}>
@@ -283,34 +343,26 @@ export default function DateTimePicker({
         aria-haspopup="dialog"
         aria-expanded={openPanel === 'date'}
         onClick={() => setOpenPanel((p) => (p === 'date' ? null : 'date'))}
-        className={chip(openPanel === 'date')}
+        className={pickerChipClass(openPanel === 'date', chipClassName)}
       >
         <CalendarIcon className="size-4 shrink-0 text-text-tertiary" />
         {dateLabel}
       </button>
       {!allDay && (
-        <button
-          ref={timeBtnRef}
-          type="button"
+        <TimePicker
+          value={selected ? { hour: selected.getHours(), minute: selected.getMinutes() } : null}
+          onChange={selectTime}
+          open={openPanel === 'time'}
+          onOpenChange={(open) => setOpenPanel(open ? 'time' : null)}
           disabled={disabled}
-          aria-haspopup="dialog"
-          aria-expanded={openPanel === 'time'}
-          onClick={() => setOpenPanel((p) => (p === 'time' ? null : 'time'))}
-          className={chip(openPanel === 'time')}
-        >
-          <ClockIcon className="size-4 shrink-0 text-text-tertiary" />
-          {timeLabel}
-        </button>
+          placeholder={t.calendar.pickTime}
+          chipClassName={chipClassName}
+        />
       )}
 
       {openPanel === 'date' && (
         <FloatingPanel anchorRef={dateBtnRef} onClose={() => setOpenPanel(null)} widthClass="w-72">
           <DatePanel selected={selected} onSelect={selectDate} />
-        </FloatingPanel>
-      )}
-      {openPanel === 'time' && !allDay && (
-        <FloatingPanel anchorRef={timeBtnRef} onClose={() => setOpenPanel(null)} widthClass="w-44">
-          <TimePanel selected={selected} onSelect={selectTime} />
         </FloatingPanel>
       )}
     </div>

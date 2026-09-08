@@ -29,6 +29,20 @@ def _next_week(value: datetime) -> datetime:
     return local
 
 
+def _next_occurrence(weekday: int, time_str: str, after: datetime) -> datetime:
+    """Nearest datetime on `weekday` (0=Monday..6=Sunday) at `time_str`
+    ("HH:MM") that is at/after `after`, computed in local wall-clock time
+    (see _next_week) so a shifted series lands on the intended weekday
+    regardless of DST. Returned in UTC."""
+    hour, minute = (int(part) for part in time_str.split(":"))
+    local_after = after.astimezone(_LOCAL_TZ)
+    days_ahead = (weekday - local_after.weekday()) % 7
+    candidate = (local_after + timedelta(days=days_ahead)).replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if candidate < local_after:
+        candidate += timedelta(weeks=1)
+    return candidate.astimezone(timezone.utc)
+
+
 def _get_task_or_404(task_id: int, db: Session) -> models.Task:
     task = db.get(models.Task, task_id)
     if task is None:
@@ -171,6 +185,47 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
     db.commit()
     db.refresh(task)
     return task
+
+
+@router.patch("/series/{recurrence_id}", response_model=list[schemas.Task])
+def update_meeting_series(recurrence_id: str, payload: schemas.SeriesUpdate, db: Session = Depends(get_db)):
+    """Reschedules an entire recurring series to a new weekday/time (and
+    optionally title/all_day). Not-yet-occurred rows are replaced by a fresh
+    run generated from the new schedule; past rows are left as history."""
+    rows = db.query(models.Task).filter(models.Task.recurrence_id == recurrence_id).all()
+    if not rows:
+        raise HTTPException(status_code=404, detail="Series not found")
+
+    now = datetime.now(timezone.utc)
+    template_source = max(rows, key=lambda r: r.due_at)
+    title = payload.title if payload.title is not None else template_source.title
+    all_day = payload.all_day if payload.all_day is not None else template_source.all_day
+
+    db.query(models.Task).filter(
+        models.Task.recurrence_id == recurrence_id, models.Task.due_at >= now
+    ).delete(synchronize_session=False)
+
+    anchor = models.Task(
+        project_id=None,
+        title=title,
+        description=template_source.description,
+        category=models.TaskCategory.meeting,
+        status=models.TaskStatus.in_progress,
+        criticality=template_source.criticality,
+        due_at=_next_occurrence(payload.weekday, payload.time, now),
+        all_day=all_day,
+        recurrence_id=recurrence_id,
+    )
+    db.add(anchor)
+    _generate_following_occurrences(db, anchor, recurrence_id, now + _RECURRENCE_HORIZON)
+
+    db.commit()
+    return (
+        db.query(models.Task)
+        .filter(models.Task.recurrence_id == recurrence_id)
+        .order_by(models.Task.due_at)
+        .all()
+    )
 
 
 @router.delete("/{task_id}", status_code=204)

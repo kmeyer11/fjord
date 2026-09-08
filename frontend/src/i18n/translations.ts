@@ -85,6 +85,12 @@ const en = {
     nothingUnscheduled: 'Nothing on this day.',
     moreCount: (n: number) => `+${n} more`,
     loadError: 'Something went wrong loading the calendar',
+    recurringMeetings: 'Recurring',
+    otherMeetings: 'Other meetings',
+    editSeries: 'Edit Series',
+    seriesWeekday: 'Repeats on',
+    save: 'Save',
+    deleteSeries: 'Delete Series',
   },
 
   externalEventModal: {
@@ -225,6 +231,12 @@ const da: typeof en = {
     nothingUnscheduled: 'Intet denne dag.',
     moreCount: (n: number) => `+${n} mere`,
     loadError: 'Der gik noget galt under indlæsning af kalenderen',
+    recurringMeetings: 'Gentagende',
+    otherMeetings: 'Andre møder',
+    editSeries: 'Rediger serie',
+    seriesWeekday: 'Gentages på',
+    save: 'Gem',
+    deleteSeries: 'Slet serie',
   },
 
   externalEventModal: {

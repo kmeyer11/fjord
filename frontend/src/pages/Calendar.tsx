@@ -9,6 +9,7 @@ import MobileDaySelector from '../components/calendar/MobileDaySelector'
 import MonthScroller from '../components/calendar/MonthScroller'
 import ExternalEventDetailModal from '../components/ExternalEventDetailModal'
 import NewMeetingModal from '../components/NewMeetingModal'
+import SeriesEditModal from '../components/SeriesEditModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
 import { addDays, addMonths, dateKey, formatMonth, formatWeekRange, startOfMonth, startOfWeek } from '../lib/date'
@@ -29,6 +30,7 @@ export default function Calendar() {
   const [externalEvents, setExternalEvents] = useState<ExternalEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [editingSeries, setEditingSeries] = useState<Task | null>(null)
   const [viewingExternalEvent, setViewingExternalEvent] = useState<ExternalEvent | null>(null)
   const [newMeetingDate, setNewMeetingDate] = useState<Date | null>(null)
 
@@ -192,6 +194,7 @@ export default function Calendar() {
           meetingTasks={meetingTasks}
           projectColors={projectColors}
           onTaskClick={setEditingTask}
+          onEditSeries={setEditingSeries}
           onCreateMeeting={createMeeting}
         />
       </div>
@@ -230,6 +233,28 @@ export default function Calendar() {
 
       {newMeetingDate && (
         <NewMeetingModal initialDate={newMeetingDate} onClose={() => setNewMeetingDate(null)} onCreate={createMeeting} />
+      )}
+
+      {editingSeries?.due_at && (
+        <SeriesEditModal
+          series={{
+            recurrenceId: editingSeries.recurrence_id!,
+            title: editingSeries.title,
+            weekday: (new Date(editingSeries.due_at).getDay() + 6) % 7,
+            hour: new Date(editingSeries.due_at).getHours(),
+            minute: new Date(editingSeries.due_at).getMinutes(),
+            allDay: editingSeries.all_day,
+          }}
+          onClose={() => setEditingSeries(null)}
+          onSave={async (data) => {
+            await api.updateMeetingSeries(editingSeries.recurrence_id!, data)
+            reloadTasks()
+          }}
+          onDelete={async () => {
+            await api.deleteTask(editingSeries.id, 'future')
+            reloadTasks()
+          }}
+        />
       )}
     </DndContext>
   )

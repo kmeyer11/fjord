@@ -85,6 +85,10 @@ export const api = {
   ) => request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteTask: (id: number, scope: 'single' | 'future' = 'single') =>
     request<void>(`/tasks/${id}?scope=${scope}`, { method: 'DELETE' }),
+  updateMeetingSeries: (
+    recurrenceId: string,
+    data: { title: string; weekday: number; time: string; all_day?: boolean },
+  ) => request<Task[]>(`/tasks/series/${recurrenceId}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   listExternalEvents: (start: Date, end: Date, force = false) =>
     request<ExternalEvent[]>(
