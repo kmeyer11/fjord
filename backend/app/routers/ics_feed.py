@@ -29,7 +29,11 @@ def fjord_ics_feed(token: str, db: Session = Depends(get_db)):
 
     tasks = (
         db.query(models.Task)
-        .filter(models.Task.status == models.TaskStatus.scheduled, models.Task.due_at.isnot(None))
+        .filter(
+            models.Task.status == models.TaskStatus.scheduled,
+            models.Task.due_at.isnot(None),
+            models.Task.category == models.TaskCategory.meeting,
+        )
         .all()
     )
     for task in tasks:
