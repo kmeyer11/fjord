@@ -12,7 +12,7 @@ environment variables (see app.config) for headless/automated deployment.
 import logging
 import re
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 import caldav
 from caldav.elements import ical
@@ -126,7 +126,7 @@ def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[di
                 )
         _cache[cache_key] = (time.time(), events)
         _last_error = None
-        _last_synced_at = datetime.utcnow()
+        _last_synced_at = datetime.now(timezone.utc)
         return events
     except Exception as exc:  # noqa: BLE001 - CalDAV/network failures are broad and non-fatal for a read-only sync
         logger.warning("CalDAV fetch failed: %s", exc)
