@@ -12,7 +12,7 @@ const en = {
     empty: 'No projects yet — create your first one to start a backlog.',
     noTasksYet: 'No tasks yet',
     backlog: 'backlog',
-    scheduled: 'scheduled',
+    inProgress: 'in progress',
     done: 'done',
     favorite: 'Add to favorites',
     unfavorite: 'Remove from favorites',
@@ -37,7 +37,7 @@ const en = {
 
   board: {
     backlog: 'Backlog',
-    scheduled: 'Scheduled',
+    inProgress: 'In Progress',
     done: 'Done',
     addTask: 'Add task',
     taskTitlePlaceholder: 'Task title',
@@ -152,7 +152,7 @@ const da: typeof en = {
     empty: 'Ingen projekter endnu — opret dit første for at starte en backlog.',
     noTasksYet: 'Ingen opgaver endnu',
     backlog: 'backlog',
-    scheduled: 'planlagt',
+    inProgress: 'i gang',
     done: 'færdig',
     favorite: 'Tilføj til favoritter',
     unfavorite: 'Fjern fra favoritter',
@@ -177,7 +177,7 @@ const da: typeof en = {
 
   board: {
     backlog: 'Backlog',
-    scheduled: 'Planlagt',
+    inProgress: 'I gang',
     done: 'Færdig',
     addTask: 'Tilføj opgave',
     taskTitlePlaceholder: 'Opgavetitel',

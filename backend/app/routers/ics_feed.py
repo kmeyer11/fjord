@@ -10,9 +10,9 @@ from app.database import get_db
 
 router = APIRouter(tags=["ics-feed"])
 
-# Scheduled tasks don't carry a duration, so each gets a fixed-length block on
-# the published feed — long enough to be visible on a subscribed calendar,
-# short enough not to visually overlap the next scheduled task.
+# Tasks don't carry a duration, so each gets a fixed-length block on the
+# published feed — long enough to be visible on a subscribed calendar, short
+# enough not to visually overlap the next one.
 _EVENT_DURATION = timedelta(minutes=30)
 
 
@@ -30,7 +30,7 @@ def fjord_ics_feed(token: str, db: Session = Depends(get_db)):
     tasks = (
         db.query(models.Task)
         .filter(
-            models.Task.status == models.TaskStatus.scheduled,
+            models.Task.status == models.TaskStatus.in_progress,
             models.Task.due_at.isnot(None),
             models.Task.category == models.TaskCategory.meeting,
         )

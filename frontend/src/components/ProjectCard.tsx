@@ -11,7 +11,7 @@ export default function ProjectCard({
   onToggleFavorite: () => void
 }) {
   const { t } = useLanguage()
-  const total = project.task_counts.backlog + project.task_counts.scheduled + project.task_counts.done
+  const total = project.task_counts.backlog + project.task_counts.in_progress + project.task_counts.done
 
   return (
     <Link
@@ -55,7 +55,7 @@ export default function ProjectCard({
             {project.task_counts.backlog} {t.dashboard.backlog}
           </span>
           <span>
-            {project.task_counts.scheduled} {t.dashboard.scheduled}
+            {project.task_counts.in_progress} {t.dashboard.inProgress}
           </span>
           <span>
             {project.task_counts.done} {t.dashboard.done}
