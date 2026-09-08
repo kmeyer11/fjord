@@ -2,12 +2,13 @@ import { DndContext, PointerSensor, TouchSensor, pointerWithin, useSensor, useSe
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { ExternalEvent, ProjectWithCounts, Task } from '../api/types'
-import BacklogPanel, { BACKLOG_DROP_ID } from '../components/calendar/BacklogPanel'
 import CalendarBody from '../components/calendar/CalendarBody'
 import CalendarHeader, { type CalendarViewMode } from '../components/calendar/CalendarHeader'
+import MeetingsPanel from '../components/calendar/MeetingsPanel'
 import MobileDaySelector from '../components/calendar/MobileDaySelector'
 import MonthScroller from '../components/calendar/MonthScroller'
 import ExternalEventDetailModal from '../components/ExternalEventDetailModal'
+import NewMeetingModal from '../components/NewMeetingModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
 import { addDays, addMonths, dateKey, formatMonth, formatWeekRange, startOfMonth, startOfWeek } from '../lib/date'
@@ -29,6 +30,7 @@ export default function Calendar() {
   const [error, setError] = useState<string | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [viewingExternalEvent, setViewingExternalEvent] = useState<ExternalEvent | null>(null)
+  const [newMeetingDate, setNewMeetingDate] = useState<Date | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -46,6 +48,13 @@ export default function Calendar() {
   }
 
   useEffect(reloadTasks, [])
+
+  async function createMeeting(data: { title: string; due_at: string; all_day?: boolean; recurring?: boolean }) {
+    const created = await api.createMeeting(data)
+    // A recurring series adds more rows than the one returned — reload to pick them up.
+    if (created.recurrence_id) reloadTasks()
+    else setTasks((prev) => [...prev, created])
+  }
 
   useEffect(() => {
     // Month view scrolls continuously (see MonthScroller) and grows the
@@ -77,25 +86,19 @@ export default function Calendar() {
 
   const projectColors = new Map(projects.map((p) => [p.id, p.color]))
 
+  // The calendar only ever shows meetings — regular tasks live entirely in
+  // the project/Kanban board, so they're filtered out here rather than
+  // bucketed into the grid or the sidebar.
   const tasksByDay = new Map<string, Task[]>()
-  const backlogTasks: Task[] = []
-  const scheduledTasks: Task[] = []
   const meetingTasksRaw: Task[] = []
   for (const task of tasks) {
-    if (task.due_at) {
-      const key = dateKey(new Date(task.due_at))
-      tasksByDay.set(key, [...(tasksByDay.get(key) ?? []), task])
-      if (task.category === 'meeting') {
-        // A recurring series materializes many rows into the future — only
-        // surface upcoming ones here, or the sidebar list grows unbounded.
-        const isPastRecurrence = task.recurrence_id && new Date(task.due_at) < new Date()
-        if (!isPastRecurrence) meetingTasksRaw.push(task)
-      } else if (task.status === 'scheduled') {
-        scheduledTasks.push(task)
-      }
-    } else if (task.status === 'backlog') {
-      backlogTasks.push(task)
-    }
+    if (task.category !== 'meeting' || !task.due_at) continue
+    const key = dateKey(new Date(task.due_at))
+    tasksByDay.set(key, [...(tasksByDay.get(key) ?? []), task])
+    // A recurring series materializes many rows into the future — only
+    // surface upcoming ones here, or the sidebar list grows unbounded.
+    const isPastRecurrence = task.recurrence_id && new Date(task.due_at) < new Date()
+    if (!isPastRecurrence) meetingTasksRaw.push(task)
   }
   // A recurring series is one meeting, not N — collapse it to its next
   // upcoming occurrence; the calendar grid still shows every individual date.
@@ -116,26 +119,16 @@ export default function Calendar() {
     externalByDay.set(key, [...(externalByDay.get(key) ?? []), event])
   }
 
+  // The only thing left draggable on the calendar is a meeting chip, dropped
+  // onto a new day/hour slot to reschedule it.
   async function handleDragEnd(event: DragEndEvent) {
     const task = event.active.data.current?.task as Task | undefined
-    if (!task || !event.over) return
+    const slot = event.over?.data.current as { date: Date; hour: number } | undefined
+    if (!task || !slot) return
 
-    let update: Partial<Pick<Task, 'status' | 'due_at'>> | null = null
-
-    if (event.over.id === BACKLOG_DROP_ID) {
-      // Meetings have no backlog state — dropping one here would strand it
-      // off the calendar grid with no way back except editing its date.
-      if (task.category !== 'meeting' && task.status !== 'backlog') update = { status: 'backlog', due_at: null }
-    } else {
-      const slot = event.over.data.current as { date: Date; hour: number } | undefined
-      if (slot) {
-        const due = new Date(slot.date)
-        due.setHours(slot.hour, 0, 0, 0)
-        update = { status: 'scheduled', due_at: due.toISOString() }
-      }
-    }
-
-    if (!update) return
+    const due = new Date(slot.date)
+    due.setHours(slot.hour, 0, 0, 0)
+    const update: Partial<Pick<Task, 'status' | 'due_at'>> = { status: 'scheduled', due_at: due.toISOString() }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, ...update } : t)))
     try {
@@ -179,6 +172,7 @@ export default function Calendar() {
               projectColors={projectColors}
               onTaskClick={setEditingTask}
               onExternalEventClick={setViewingExternalEvent}
+              onCreateAt={setNewMeetingDate}
             />
           ) : (
             <MonthScroller
@@ -190,21 +184,15 @@ export default function Calendar() {
               projectColors={projectColors}
               onTaskClick={setEditingTask}
               onExternalEventClick={setViewingExternalEvent}
+              onCreateAt={setNewMeetingDate}
             />
           )}
         </div>
-        <BacklogPanel
-          backlogTasks={backlogTasks}
-          scheduledTasks={scheduledTasks}
+        <MeetingsPanel
           meetingTasks={meetingTasks}
           projectColors={projectColors}
           onTaskClick={setEditingTask}
-          onCreateMeeting={async (data) => {
-            const created = await api.createMeeting(data)
-            // A recurring series adds more rows than the one returned — reload to pick them up.
-            if (created.recurrence_id) reloadTasks()
-            else setTasks((prev) => [...prev, created])
-          }}
+          onCreateMeeting={createMeeting}
         />
       </div>
 
@@ -238,6 +226,10 @@ export default function Calendar() {
 
       {viewingExternalEvent && (
         <ExternalEventDetailModal event={viewingExternalEvent} onClose={() => setViewingExternalEvent(null)} />
+      )}
+
+      {newMeetingDate && (
+        <NewMeetingModal initialDate={newMeetingDate} onClose={() => setNewMeetingDate(null)} onCreate={createMeeting} />
       )}
     </DndContext>
   )

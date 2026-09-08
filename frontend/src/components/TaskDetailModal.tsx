@@ -3,6 +3,7 @@ import type { Task, TaskCriticality } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { dateKey, toDatetimeLocalValue } from '../lib/date'
 import CriticalityPicker from './CriticalityPicker'
+import DateTimePicker from './DateTimePicker'
 import { RepeatIcon } from './icons'
 import Modal from './Modal'
 
@@ -84,7 +85,9 @@ export default function TaskDetailModal({
           <button onClick={onClose} className="text-[15px] text-accent">
             {t.taskModal.cancel}
           </button>
-          <span className="text-[15px] font-semibold text-text">{t.taskModal.title}</span>
+          <span className="text-[15px] font-semibold text-text">
+            {isMeeting ? t.taskModal.titleMeeting : t.taskModal.title}
+          </span>
           <button
             onClick={handleSave}
             disabled={!canSave}
@@ -115,19 +118,21 @@ export default function TaskDetailModal({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="task-description" className="text-[13px] font-medium text-text-secondary">
-            {t.taskModal.fieldDescription}
-          </label>
-          <textarea
-            id="task-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            placeholder={t.taskModal.descriptionPlaceholder}
-            className="resize-none rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[14px] text-text outline-none placeholder:text-text-tertiary focus:border-accent"
-          />
-        </div>
+        {!isMeeting && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="task-description" className="text-[13px] font-medium text-text-secondary">
+              {t.taskModal.fieldDescription}
+            </label>
+            <textarea
+              id="task-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder={t.taskModal.descriptionPlaceholder}
+              className="resize-none rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[14px] text-text outline-none placeholder:text-text-tertiary focus:border-accent"
+            />
+          </div>
+        )}
 
         {!isMeeting && (
           <div className="flex flex-col gap-1.5">
@@ -138,19 +143,17 @@ export default function TaskDetailModal({
 
         {isMeeting && (
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="task-due-at"
-              className="flex items-center gap-1.5 text-[13px] font-medium text-text-secondary"
-            >
+            <span className="flex items-center gap-1.5 text-[13px] font-medium text-text-secondary">
               {t.calendar.meetingDateTime}
               {recurring && <RepeatIcon className="size-3.5 text-text-tertiary" />}
-            </label>
-            <input
-              id="task-due-at"
-              type={allDay ? 'date' : 'datetime-local'}
+            </span>
+            <DateTimePicker
               value={dueAt}
-              onChange={(e) => setDueAt(e.target.value)}
-              className="rounded-xl border border-hairline bg-bg px-3 py-2.5 text-[15px] text-text outline-none focus:border-accent"
+              onChange={setDueAt}
+              allDay={allDay}
+              disabled={submitting}
+              ariaLabel={t.calendar.meetingDateTime}
+              chipClassName="bg-bg"
             />
             <label className="flex items-center gap-1.5 px-0.5 py-0.5 text-[12px] text-text-secondary">
               <input

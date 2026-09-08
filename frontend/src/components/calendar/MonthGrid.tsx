@@ -50,6 +50,7 @@ function MonthDayCell({
   onTaskClick,
   onExternalEventClick,
   onShowMore,
+  onCreateAt,
 }: {
   date: Date
   inMonth: boolean
@@ -59,6 +60,7 @@ function MonthDayCell({
   onTaskClick?: (task: Task) => void
   onExternalEventClick?: (event: ExternalEvent) => void
   onShowMore?: () => void
+  onCreateAt?: (date: Date) => void
 }) {
   const { t } = useLanguage()
   const isDesktop = useIsDesktop()
@@ -80,6 +82,15 @@ function MonthDayCell({
     <div
       ref={setNodeRef}
       onClick={!isDesktop ? onShowMore : undefined}
+      onDoubleClick={
+        isDesktop && onCreateAt
+          ? () => {
+              const withTime = new Date(date)
+              withTime.setHours(9, 0, 0, 0)
+              onCreateAt(withTime)
+            }
+          : undefined
+      }
       className={[
         'flex min-h-0 flex-col gap-1 border-b border-l border-hairline p-1.5 first:border-l-0 md:p-2',
         isOver ? 'bg-accent-soft' : inMonth ? '' : 'bg-black/[0.02]',
@@ -240,6 +251,7 @@ export function MonthGridBody({
   projectColors,
   onTaskClick,
   onExternalEventClick,
+  onCreateAt,
 }: {
   monthDate: Date
   tasksByDay: Map<string, Task[]>
@@ -247,6 +259,7 @@ export function MonthGridBody({
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
   onExternalEventClick?: (event: ExternalEvent) => void
+  onCreateAt?: (date: Date) => void
 }) {
   const cells = getMonthCells(monthDate)
   const [expandedDay, setExpandedDay] = useState<Date | null>(null)
@@ -269,6 +282,7 @@ export function MonthGridBody({
               onTaskClick={onTaskClick}
               onExternalEventClick={onExternalEventClick}
               onShowMore={() => setExpandedDay(d)}
+              onCreateAt={onCreateAt}
             />
           )
         })}

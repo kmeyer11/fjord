@@ -7,7 +7,7 @@ import { CalendarTaskBlock, ExternalEventBlock, HOUR_HEIGHT } from './EventBlock
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
-function HourCell({ date, hour }: { date: Date; hour: number }) {
+function HourCell({ date, hour, onCreateAt }: { date: Date; hour: number; onCreateAt?: (date: Date) => void }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `slot-${date.toDateString()}-${hour}`,
     data: { date, hour },
@@ -16,6 +16,15 @@ function HourCell({ date, hour }: { date: Date; hour: number }) {
     <div
       ref={setNodeRef}
       style={{ height: HOUR_HEIGHT }}
+      onDoubleClick={
+        onCreateAt
+          ? () => {
+              const withTime = new Date(date)
+              withTime.setHours(hour, 0, 0, 0)
+              onCreateAt(withTime)
+            }
+          : undefined
+      }
       className={['border-b border-hairline', isOver ? 'bg-accent-soft' : ''].join(' ')}
     />
   )
@@ -43,6 +52,7 @@ export default function DayColumn({
   projectColors,
   onTaskClick,
   onExternalEventClick,
+  onCreateAt,
 }: {
   date: Date
   tasks: Task[]
@@ -50,11 +60,12 @@ export default function DayColumn({
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
   onExternalEventClick?: (event: ExternalEvent) => void
+  onCreateAt?: (date: Date) => void
 }) {
   return (
     <div className="relative flex-1 border-l border-hairline first:border-l-0">
       {HOURS.map((h) => (
-        <HourCell key={h} date={date} hour={h} />
+        <HourCell key={h} date={date} hour={h} onCreateAt={onCreateAt} />
       ))}
       <div className="pointer-events-none absolute inset-0">
         {externalEvents.map((e) => (

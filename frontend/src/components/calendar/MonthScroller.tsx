@@ -34,6 +34,7 @@ export default function MonthScroller({
   projectColors,
   onTaskClick,
   onExternalEventClick,
+  onCreateAt,
 }: {
   activeMonth: Date
   onActiveMonthChange: (month: Date) => void
@@ -43,6 +44,7 @@ export default function MonthScroller({
   projectColors: Map<number, string>
   onTaskClick?: (task: Task) => void
   onExternalEventClick?: (event: ExternalEvent) => void
+  onCreateAt?: (date: Date) => void
 }) {
   const { locale } = useLanguage()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -191,6 +193,7 @@ export default function MonthScroller({
               projectColors={projectColors}
               onTaskClick={onTaskClick}
               onExternalEventClick={onExternalEventClick}
+              onCreateAt={onCreateAt}
             />
           </div>
         ))}

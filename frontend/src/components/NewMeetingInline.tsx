@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { toDatetimeLocalValue } from '../lib/date'
+import DateTimePicker from './DateTimePicker'
 import { PlusIcon, RepeatIcon } from './icons'
 
 export default function NewMeetingInline({
@@ -114,13 +115,12 @@ export default function NewMeetingInline({
         placeholder={t.calendar.meetingTitlePlaceholder}
         className="rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[14px] text-text outline-none focus:border-accent"
       />
-      <input
-        type={allDay ? 'date' : 'datetime-local'}
+      <DateTimePicker
         value={dueAt}
+        onChange={setDueAt}
+        allDay={allDay}
         disabled={submitting}
-        onChange={(e) => setDueAt(e.target.value)}
-        aria-label={t.calendar.meetingDateTime}
-        className="rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[13px] text-text outline-none focus:border-accent"
+        ariaLabel={t.calendar.meetingDateTime}
       />
       <label className="flex items-center gap-1.5 px-0.5 py-0.5 text-[12px] text-text-secondary">
         <input
@@ -143,6 +143,24 @@ export default function NewMeetingInline({
         <RepeatIcon className="size-3 shrink-0" />
         {t.calendar.repeatWeekly}
       </label>
+      <div className="flex gap-1.5 pt-0.5">
+        <button
+          type="button"
+          onClick={reset}
+          disabled={submitting}
+          className="flex-1 rounded-lg border border-hairline px-2 py-1.5 text-[12px] font-medium text-text-secondary hover:bg-black/[0.04] disabled:opacity-50"
+        >
+          {t.calendar.cancel}
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={submitting || !title.trim() || !dueAt}
+          className="flex-1 rounded-lg bg-accent px-2 py-1.5 text-[12px] font-medium text-bg hover:bg-accent-strong disabled:opacity-40"
+        >
+          {t.calendar.create}
+        </button>
+      </div>
     </div>
   )
 }

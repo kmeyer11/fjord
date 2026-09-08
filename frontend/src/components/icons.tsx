@@ -96,6 +96,15 @@ export function StarIcon({ className, filled }: IconProps & { filled?: boolean }
   )
 }
 
+export function ClockIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="8.75" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  )
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

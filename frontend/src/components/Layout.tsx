@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { api } from '../api/client'
 import type { ProjectWithCounts } from '../api/types'
+import type { Language } from '../i18n/translations'
 import { useLanguage } from '../i18n/LanguageContext'
 import Logo from './Logo'
-import Switch from './Switch'
 import { CalendarIcon, GearIcon, GlobeIcon, GridIcon, StarIcon } from './icons'
 
 function sidebarLinkClasses(isActive: boolean) {
@@ -57,13 +57,37 @@ function tabLinkClasses(isActive: boolean) {
 
 function LanguageToggle() {
   const { t, language, setLanguage } = useLanguage()
+  const options: { value: Language; label: string }[] = [
+    { value: 'da', label: t.settings.danish },
+    { value: 'en', label: t.settings.english },
+  ]
   return (
-    <div className="flex items-center justify-between rounded-lg px-3 py-1.5">
-      <span className="flex items-center gap-2.5 text-[13px] font-medium text-text-secondary">
-        <GlobeIcon className="size-[18px]" />
-        {language === 'da' ? 'Oversæt?' : 'Translate?'}
-      </span>
-      <Switch checked={language === 'da'} onChange={(checked) => setLanguage(checked ? 'da' : 'en')} label={t.settings.language} />
+    <div className="flex items-center gap-2.5 rounded-lg px-3 py-1.5">
+      <GlobeIcon className="size-[18px] shrink-0 text-text-secondary" />
+      <button
+        type="button"
+        role="switch"
+        aria-checked={language === 'da'}
+        aria-label={t.settings.language}
+        // A single toggle for the whole control, not per-option — so a tap
+        // anywhere switches languages, even on the side already highlighted
+        // (a per-option handler would otherwise no-op when you tap the one
+        // already active).
+        onClick={() => setLanguage(language === 'da' ? 'en' : 'da')}
+        className="flex flex-1 rounded-full border border-hairline bg-surface p-0.5 text-[13px] font-medium"
+      >
+        {options.map(({ value, label }) => (
+          <span
+            key={value}
+            className={[
+              'flex-1 rounded-full px-2.5 py-1 transition-colors',
+              language === value ? 'bg-moss text-bg' : 'text-text-secondary',
+            ].join(' ')}
+          >
+            {label}
+          </span>
+        ))}
+      </button>
     </div>
   )
 }
