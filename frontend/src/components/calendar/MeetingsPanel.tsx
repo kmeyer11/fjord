@@ -147,33 +147,6 @@ export default function MeetingsPanel({
           <NewMeetingInline onCreate={onCreateMeeting} />
         </div>
         <ScrollList>
-          {recurring.length > 0 && (
-            <>
-              <SectionHeading label={t.calendar.recurringMeetings} />
-              {byWeekday.map(
-                (group, weekday) =>
-                  group.length > 0 && (
-                    <div key={weekday} className="flex flex-col gap-1">
-                      <WeekdayHeading label={t.weekdaysShort[weekday]} />
-                      {group.map((task) => (
-                        <DraggableTask
-                          key={task.id}
-                          task={task}
-                          color={taskColor(task, projectColors)}
-                          onClick={onEditSeries ? () => onEditSeries(task) : undefined}
-                          subtitle={
-                            task.due_at
-                              ? new Date(task.due_at).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
-                              : undefined
-                          }
-                        />
-                      ))}
-                    </div>
-                  ),
-              )}
-            </>
-          )}
-          {recurring.length > 0 && oneOff.length > 0 && <SectionHeading label={t.calendar.otherMeetings} />}
           {oneOff.map((task) => (
             <DraggableTask
               key={task.id}
@@ -193,6 +166,32 @@ export default function MeetingsPanel({
             />
           ))}
         </ScrollList>
+        {recurring.length > 0 && (
+          <div className="flex shrink-0 flex-col gap-2 md:pt-1">
+            <SectionHeading label={t.calendar.recurringMeetings} />
+            {byWeekday.map(
+              (group, weekday) =>
+                group.length > 0 && (
+                  <div key={weekday} className="flex flex-col gap-1">
+                    <WeekdayHeading label={t.weekdaysShort[weekday]} />
+                    {group.map((task) => (
+                      <DraggableTask
+                        key={task.id}
+                        task={task}
+                        color={taskColor(task, projectColors)}
+                        onClick={onEditSeries ? () => onEditSeries(task) : undefined}
+                        subtitle={
+                          task.due_at
+                            ? new Date(task.due_at).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                ),
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
