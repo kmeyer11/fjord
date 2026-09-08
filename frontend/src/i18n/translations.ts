@@ -124,7 +124,7 @@ const en = {
     changePasscode: 'Change your passcode',
     passcodeUpdated: 'Passcode updated',
     change: 'Change',
-    newPasscodePlaceholder: 'New 4–6 digit passcode',
+    newPasscodePlaceholder: 'New 4-digit passcode',
     save: 'Save',
     logOut: 'Log Out',
     language: 'Language',
@@ -136,8 +136,9 @@ const en = {
     enterPasscode: 'Enter Passcode',
     setPasscode: 'Set a Passcode',
     unlockHint: 'Unlock Fjord to continue',
-    setHint: '4–6 digits, keeps out casual snoopers',
+    setHint: '4 digits, keeps out casual snoopers',
     incorrect: 'Incorrect passcode',
+    tooManyAttempts: (time: string) => `Too many attempts — try again in ${time}`,
   },
 }
 
@@ -263,7 +264,7 @@ const da: typeof en = {
     changePasscode: 'Skift din adgangskode',
     passcodeUpdated: 'Adgangskode opdateret',
     change: 'Skift',
-    newPasscodePlaceholder: 'Ny 4–6-cifret adgangskode',
+    newPasscodePlaceholder: 'Ny 4-cifret adgangskode',
     save: 'Gem',
     logOut: 'Log ud',
     language: 'Sprog',
@@ -275,8 +276,9 @@ const da: typeof en = {
     enterPasscode: 'Indtast adgangskode',
     setPasscode: 'Opret en adgangskode',
     unlockHint: 'Lås Fjord op for at fortsætte',
-    setHint: '4–6 cifre, holder tilfældige nysgerrige ude',
+    setHint: '4 cifre, holder tilfældige nysgerrige ude',
     incorrect: 'Forkert adgangskode',
+    tooManyAttempts: (time: string) => `For mange forsøg — prøv igen om ${time}`,
   },
 }
 

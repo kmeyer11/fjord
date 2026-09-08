@@ -119,7 +119,7 @@ export default function Settings() {
   }
 
   async function savePin() {
-    if (newPin.length < 4) return
+    if (newPin.length !== 4) return
     await api.changePin(newPin)
     setNewPin('')
     setChangingPin(false)
@@ -250,11 +250,11 @@ export default function Settings() {
                 inputMode="numeric"
                 autoFocus
                 value={newPin}
-                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder={t.settings.newPasscodePlaceholder}
                 className="flex-1 rounded-lg border border-hairline bg-bg px-3 py-2 text-[14px] text-text outline-none focus:border-accent"
               />
-              <button onClick={savePin} disabled={newPin.length < 4} className="text-[14px] font-semibold text-accent disabled:opacity-40">
+              <button onClick={savePin} disabled={newPin.length !== 4} className="text-[14px] font-semibold text-accent disabled:opacity-40">
                 {t.settings.save}
               </button>
               <button onClick={() => setChangingPin(false)} className="text-[14px] text-text-tertiary">

@@ -2,6 +2,17 @@ import type { ExternalEvent, Project, ProjectWithCounts, Task, TaskCriticality, 
 
 export const UNAUTHORIZED_EVENT = 'fjord:unauthorized'
 
+export class ApiError extends Error {
+  status: number
+  retryAfter?: number
+
+  constructor(status: number, message: string, retryAfter?: number) {
+    super(message)
+    this.status = status
+    this.retryAfter = retryAfter
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -19,7 +30,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // not JSON — fall through to the raw response below
     }
-    throw new Error(detail ?? `${res.status} ${res.statusText}: ${body}`)
+    const retryAfterHeader = res.headers.get('Retry-After')
+    throw new ApiError(
+      res.status,
+      detail ?? `${res.status} ${res.statusText}: ${body}`,
+      retryAfterHeader ? Number(retryAfterHeader) : undefined,
+    )
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
