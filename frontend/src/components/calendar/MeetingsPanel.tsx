@@ -53,6 +53,16 @@ function ScrollList({ children }: { children: ReactNode }) {
   )
 }
 
+/** Top-level split between the "Gentagende" (recurring) and one-off meeting groups. */
+function SectionHeading({ label }: { label: string }) {
+  return <h3 className="px-1 pt-1 text-[13px] font-semibold text-text-secondary">{label}</h3>
+}
+
+/** A weekday sub-header inside the "Gentagende" section, e.g. above every series that falls on Tuesday. */
+function WeekdayHeading({ label }: { label: string }) {
+  return <h4 className="px-1 text-[11px] font-medium uppercase tracking-wide text-text-tertiary">{label}</h4>
+}
+
 /** Draggable so a meeting can be dropped onto a new day/hour on the grid to reschedule it. */
 function DraggableTask({
   task,
@@ -104,13 +114,30 @@ export default function MeetingsPanel({
   projectColors,
   onCreateMeeting,
   onTaskClick,
+  onEditSeries,
 }: {
   meetingTasks: Task[]
   projectColors: Map<number, string>
   onCreateMeeting: (data: { title: string; due_at: string; recurring?: boolean }) => Promise<void>
   onTaskClick?: (task: Task) => void
+  onEditSeries?: (task: Task) => void
 }) {
   const { t, locale } = useLanguage()
+
+  const recurring = meetingTasks.filter((task) => task.recurrence_id != null && task.due_at)
+  const oneOff = meetingTasks
+    .filter((task) => task.recurrence_id == null)
+    .slice()
+    .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
+
+  // Grouped Monday(0)..Sunday(6) so multiple series (one on Tuesdays, one on
+  // Thursdays, say) read as a schedule rather than a flat list of names.
+  const byWeekday: Task[][] = Array.from({ length: 7 }, () => [])
+  for (const task of recurring) {
+    const weekday = (new Date(task.due_at as string).getDay() + 6) % 7
+    byWeekday[weekday].push(task)
+  }
+  for (const group of byWeekday) group.sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
 
   return (
     <div className="hidden md:flex md:static md:inset-auto md:bottom-auto md:z-auto md:w-64 md:shrink-0 md:flex-col md:gap-0 md:overflow-hidden md:border-l md:border-t-0 md:bg-surface/40 md:p-3 md:backdrop-blur-none">
@@ -120,27 +147,51 @@ export default function MeetingsPanel({
           <NewMeetingInline onCreate={onCreateMeeting} />
         </div>
         <ScrollList>
-          {meetingTasks
-            .slice()
-            .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))
-            .map((task) => (
-              <DraggableTask
-                key={task.id}
-                task={task}
-                color={taskColor(task, projectColors)}
-                onClick={onTaskClick ? () => onTaskClick(task) : undefined}
-                subtitle={
-                  task.due_at
-                    ? new Date(task.due_at).toLocaleString(locale, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })
-                    : undefined
-                }
-              />
-            ))}
+          {recurring.length > 0 && (
+            <>
+              <SectionHeading label={t.calendar.recurringMeetings} />
+              {byWeekday.map(
+                (group, weekday) =>
+                  group.length > 0 && (
+                    <div key={weekday} className="flex flex-col gap-1">
+                      <WeekdayHeading label={t.weekdaysShort[weekday]} />
+                      {group.map((task) => (
+                        <DraggableTask
+                          key={task.id}
+                          task={task}
+                          color={taskColor(task, projectColors)}
+                          onClick={onEditSeries ? () => onEditSeries(task) : undefined}
+                          subtitle={
+                            task.due_at
+                              ? new Date(task.due_at).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </div>
+                  ),
+              )}
+            </>
+          )}
+          {recurring.length > 0 && oneOff.length > 0 && <SectionHeading label={t.calendar.otherMeetings} />}
+          {oneOff.map((task) => (
+            <DraggableTask
+              key={task.id}
+              task={task}
+              color={taskColor(task, projectColors)}
+              onClick={onTaskClick ? () => onTaskClick(task) : undefined}
+              subtitle={
+                task.due_at
+                  ? new Date(task.due_at).toLocaleString(locale, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })
+                  : undefined
+              }
+            />
+          ))}
         </ScrollList>
       </div>
     </div>

@@ -76,6 +76,13 @@ class Task(TaskBase):
     updated_at: datetime
 
 
+class SeriesUpdate(BaseModel):
+    title: str | None = None
+    weekday: int = Field(ge=0, le=6)  # 0=Monday..6=Sunday
+    time: str  # "HH:MM"
+    all_day: bool | None = None
+
+
 class MeetingCreate(BaseModel):
     title: str
     description: str = ""
