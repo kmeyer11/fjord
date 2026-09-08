@@ -205,7 +205,7 @@ export default function TaskDetailModal({
             disabled={submitting}
             className="mt-1 rounded-xl border border-hairline bg-surface px-4 py-2.5 text-center text-[14px] font-medium text-clay disabled:opacity-40"
           >
-            {t.taskModal.delete}
+            {isMeeting ? t.taskModal.deleteMeeting : t.taskModal.delete}
           </button>
         )}
       </form>
