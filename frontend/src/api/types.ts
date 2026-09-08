@@ -1,11 +1,11 @@
-export type TaskStatus = 'backlog' | 'scheduled' | 'done'
+export type TaskStatus = 'backlog' | 'in_progress' | 'done'
 /** 1 (least critical) through 5 (most critical). */
 export type TaskCriticality = 1 | 2 | 3 | 4 | 5
 export type TaskCategory = 'task' | 'meeting'
 
 export interface TaskCounts {
   backlog: number
-  scheduled: number
+  in_progress: number
   done: number
 }
 

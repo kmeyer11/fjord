@@ -18,7 +18,7 @@ export default function ProjectBoard() {
 
   const COLUMNS: { status: TaskStatus; title: string }[] = [
     { status: 'backlog', title: t.board.backlog },
-    { status: 'scheduled', title: t.board.scheduled },
+    { status: 'in_progress', title: t.board.inProgress },
     { status: 'done', title: t.board.done },
   ]
 

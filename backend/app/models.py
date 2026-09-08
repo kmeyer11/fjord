@@ -34,7 +34,7 @@ class UTCDateTime(TypeDecorator):
 
 class TaskStatus(str, enum.Enum):
     backlog = "backlog"
-    scheduled = "scheduled"
+    in_progress = "in_progress"
     done = "done"
 
 

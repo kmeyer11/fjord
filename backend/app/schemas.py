@@ -7,7 +7,7 @@ from app.models import TaskCategory, TaskStatus
 
 class TaskCounts(BaseModel):
     backlog: int = 0
-    scheduled: int = 0
+    in_progress: int = 0
     done: int = 0
 
 
