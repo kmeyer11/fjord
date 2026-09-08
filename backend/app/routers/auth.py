@@ -12,8 +12,8 @@ class PinPayload(BaseModel):
     @field_validator("pin")
     @classmethod
     def validate_pin(cls, value: str) -> str:
-        if not (4 <= len(value) <= 6) or not value.isdigit():
-            raise ValueError("PIN must be 4-6 digits")
+        if len(value) != 4 or not value.isdigit():
+            raise ValueError("PIN must be 4 digits")
         return value
 
 
@@ -27,23 +27,27 @@ def status(request: Request):
 
 
 @router.post("/login")
-def login(payload: PinPayload, response: Response):
+def login(payload: PinPayload, request: Request, response: Response):
+    client_ip = request.client.host if request.client else "unknown"
+    retry_after = auth.login_retry_after(client_ip)
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many attempts",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     app_secrets = config_store.load()
 
     if app_secrets.pin_hash is None:
         app_secrets.pin_hash = auth.hash_pin(payload.pin)
         config_store.save(app_secrets)
     elif not auth.verify_pin(payload.pin, app_secrets.pin_hash):
+        auth.record_failed_login(client_ip)
         raise HTTPException(status_code=401, detail="Incorrect PIN")
 
-    token = auth.make_session_token(app_secrets.session_secret)
-    response.set_cookie(
-        auth.SESSION_COOKIE,
-        token,
-        max_age=auth.SESSION_MAX_AGE,
-        httponly=True,
-        samesite="lax",
-    )
+    auth.reset_login_attempts(client_ip)
+    auth.set_session_cookie(response, app_secrets.session_secret)
     return {"ok": True}
 
 
