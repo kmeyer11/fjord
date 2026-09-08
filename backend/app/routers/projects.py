@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -6,10 +8,29 @@ from app.database import get_db
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
+# A task left sitting in Done keeps cluttering the board indefinitely
+# otherwise — once it's been completed this long it drops off the board and
+# is only reachable via the project's archive view (see list_project_archive).
+ARCHIVE_AFTER = timedelta(days=14)
+
+
+def _archive_cutoff() -> datetime:
+    return datetime.now(timezone.utc) - ARCHIVE_AFTER
+
+
+def _is_archived(task: models.Task) -> bool:
+    return (
+        task.status == models.TaskStatus.done
+        and task.completed_at is not None
+        and task.completed_at <= _archive_cutoff()
+    )
+
 
 def _with_counts(project: models.Project) -> schemas.ProjectWithCounts:
     counts = schemas.TaskCounts()
     for task in project.tasks:
+        if _is_archived(task):
+            continue
         setattr(counts, task.status.value, getattr(counts, task.status.value) + 1)
     return schemas.ProjectWithCounts(
         **schemas.Project.model_validate(project).model_dump(), task_counts=counts
@@ -66,10 +87,35 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
 @router.get("/{project_id}/tasks", response_model=list[schemas.Task])
 def list_project_tasks(project_id: int, db: Session = Depends(get_db)):
     _get_project_or_404(project_id, db)
+    cutoff = _archive_cutoff()
     return (
         db.query(models.Task)
         .filter(models.Task.project_id == project_id)
+        .filter(
+            (models.Task.status != models.TaskStatus.done)
+            | (models.Task.completed_at.is_(None))
+            | (models.Task.completed_at > cutoff)
+        )
         .order_by(models.Task.id)
+        .all()
+    )
+
+
+@router.get("/{project_id}/tasks/archive", response_model=list[schemas.Task])
+def list_project_archive(project_id: int, db: Session = Depends(get_db)):
+    """Done tasks that have aged out of the board (see ARCHIVE_AFTER above) —
+    still kept, just moved out of the way; reachable via the project's archive button."""
+    _get_project_or_404(project_id, db)
+    cutoff = _archive_cutoff()
+    return (
+        db.query(models.Task)
+        .filter(
+            models.Task.project_id == project_id,
+            models.Task.status == models.TaskStatus.done,
+            models.Task.completed_at.isnot(None),
+            models.Task.completed_at <= cutoff,
+        )
+        .order_by(models.Task.completed_at.desc())
         .all()
     )
 
@@ -78,6 +124,8 @@ def list_project_tasks(project_id: int, db: Session = Depends(get_db)):
 def create_project_task(project_id: int, payload: schemas.TaskCreate, db: Session = Depends(get_db)):
     _get_project_or_404(project_id, db)
     task = models.Task(project_id=project_id, **payload.model_dump())
+    if task.status == models.TaskStatus.done:
+        task.completed_at = datetime.now(timezone.utc)
     db.add(task)
     db.commit()
     db.refresh(task)

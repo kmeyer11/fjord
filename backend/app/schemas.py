@@ -72,6 +72,7 @@ class Task(TaskBase):
     id: int
     project_id: int | None
     recurrence_id: str | None = None
+    completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -7,6 +7,7 @@ import Calendar from './pages/Calendar'
 import Dashboard from './pages/Dashboard'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import ProjectArchive from './pages/ProjectArchive'
 import ProjectBoard from './pages/ProjectBoard'
 import Settings from './pages/Settings'
 
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/projects" element={<Dashboard />} />
         <Route path="/projects/:projectId" element={<ProjectBoard />} />
+        <Route path="/projects/:projectId/archive" element={<ProjectArchive />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/settings" element={<Settings />} />
       </Route>

@@ -5,7 +5,7 @@ import { api } from '../api/client'
 import type { ProjectWithCounts, Task, TaskStatus } from '../api/types'
 import BoardColumn from '../components/BoardColumn'
 import EditProjectModal from '../components/EditProjectModal'
-import { ChevronLeftIcon, PencilIcon, PlusIcon, StarIcon } from '../components/icons'
+import { ArchiveIcon, ChevronLeftIcon, PencilIcon, PlusIcon, StarIcon } from '../components/icons'
 import NewTaskModal from '../components/NewTaskModal'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -102,6 +102,14 @@ export default function ProjectBoard() {
         >
           <PencilIcon className="size-4" />
         </button>
+        <Link
+          to={`/projects/${id}/archive`}
+          aria-label={t.board.archive}
+          title={t.board.archive}
+          className="rounded-full p-1.5 text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
+        >
+          <ArchiveIcon className="size-4" />
+        </Link>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -113,14 +121,15 @@ export default function ProjectBoard() {
               title={title}
               tasks={tasks.filter((t) => t.status === status)}
               onTaskClick={setEditingTask}
-              footer={
+              headerAction={
                 status === 'backlog' ? (
                   <button
                     onClick={() => setCreatingTask(true)}
-                    className="flex items-center gap-1.5 rounded-xl p-2 text-left text-[13px] font-medium text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
+                    aria-label={t.board.addTask}
+                    title={t.board.addTask}
+                    className="flex size-6 items-center justify-center rounded-full bg-accent text-bg transition-opacity hover:opacity-90 active:opacity-80"
                   >
-                    <PlusIcon className="size-4" />
-                    {t.board.addTask}
+                    <PlusIcon className="size-3.5" />
                   </button>
                 ) : undefined
               }

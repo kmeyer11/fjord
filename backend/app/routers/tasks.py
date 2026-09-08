@@ -162,8 +162,15 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
     if "project_id" in updates and db.get(models.Project, updates["project_id"]) is None:
         raise HTTPException(status_code=404, detail="Project not found")
     recurring = updates.pop("recurring", None)
+    new_status = updates.pop("status", None)
     for field, value in updates.items():
         setattr(task, field, value)
+
+    if new_status is not None and new_status != task.status:
+        # Stamp/clear completed_at so the board knows how long it's sat in
+        # Done and can auto-archive it later (see ARCHIVE_AFTER in projects.py).
+        task.completed_at = datetime.now(timezone.utc) if new_status == models.TaskStatus.done else None
+        task.status = new_status
 
     if recurring is True and task.recurrence_id is None:
         if task.due_at is None:

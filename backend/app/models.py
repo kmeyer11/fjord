@@ -76,6 +76,9 @@ class Task(Base):
     all_day: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # Shared by every occurrence of a weekly-recurring meeting; null for one-off tasks/meetings.
     recurrence_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    # When the task last transitioned into 'done'; cleared if it moves back out.
+    # Drives the project board's auto-archive (see ARCHIVE_AFTER in routers/projects.py).
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
