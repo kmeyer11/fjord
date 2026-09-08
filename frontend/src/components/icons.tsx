@@ -105,6 +105,16 @@ export function ClockIcon({ className }: IconProps) {
   )
 }
 
+export function ArchiveIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="3.25" y="4.25" width="17.5" height="4.5" rx="1.5" />
+      <path d="M4.75 8.75v8.5a2 2 0 0 0 2 2h10.5a2 2 0 0 0 2-2v-8.5" />
+      <path d="M9.75 13h4.5" />
+    </svg>
+  )
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

@@ -59,6 +59,7 @@ export const api = {
   listTasks: (status?: TaskStatus) =>
     request<Task[]>(`/tasks${status ? `?status=${status}` : ''}`),
   listProjectTasks: (projectId: number) => request<Task[]>(`/projects/${projectId}/tasks`),
+  listProjectArchive: (projectId: number) => request<Task[]>(`/projects/${projectId}/tasks/archive`),
   createTask: (
     projectId: number,
     data: { title: string; description?: string; criticality?: TaskCriticality },

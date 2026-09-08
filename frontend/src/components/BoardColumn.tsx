@@ -7,13 +7,13 @@ export default function BoardColumn({
   status,
   title,
   tasks,
-  footer,
+  headerAction,
   onTaskClick,
 }: {
   status: TaskStatus
   title: string
   tasks: Task[]
-  footer?: ReactNode
+  headerAction?: ReactNode
   onTaskClick?: (task: Task) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
@@ -23,6 +23,7 @@ export default function BoardColumn({
     <div className="flex flex-col md:min-h-0 md:flex-1 md:w-72">
       <h2 className="mb-2 flex items-center gap-1.5 px-1 text-[13px] font-semibold text-text-secondary">
         {title} <span className="text-text-tertiary">{tasks.length}</span>
+        {headerAction && <span className="ml-auto">{headerAction}</span>}
       </h2>
       <div
         ref={setNodeRef}
@@ -35,10 +36,9 @@ export default function BoardColumn({
         {tasks.map((task) => (
           <TaskCard key={task.id} task={task} dense={dense} onClick={onTaskClick ? () => onTaskClick(task) : undefined} />
         ))}
-        {footer}
       </div>
     </div>
   )
 }
 
-const DENSE_THRESHOLD = 8
+const DENSE_THRESHOLD = 5

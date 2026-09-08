@@ -43,6 +43,15 @@ const en = {
     taskTitlePlaceholder: 'Task title',
     loading: 'Loading…',
     loadError: "Couldn't load project",
+    archive: 'Archive',
+  },
+
+  projectArchive: {
+    title: 'Archive',
+    loading: 'Loading…',
+    loadError: "Couldn't load archive",
+    empty: "No archived tasks yet — tasks move here 14 days after they're marked done.",
+    completedOn: (date: string) => `Done ${date}`,
   },
 
   taskModal: {
@@ -188,6 +197,15 @@ const da: typeof en = {
     taskTitlePlaceholder: 'Opgavetitel',
     loading: 'Indlæser…',
     loadError: 'Projektet kunne ikke indlæses',
+    archive: 'Arkiv',
+  },
+
+  projectArchive: {
+    title: 'Arkiv',
+    loading: 'Indlæser…',
+    loadError: 'Arkivet kunne ikke indlæses',
+    empty: 'Ingen arkiverede opgaver endnu — opgaver flyttes hertil 14 dage efter de er markeret som færdige.',
+    completedOn: (date: string) => `Færdig ${date}`,
   },
 
   taskModal: {

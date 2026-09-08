@@ -33,6 +33,8 @@ export interface Task {
   all_day: boolean
   /** Shared by every occurrence of a weekly-recurring meeting; null otherwise. */
   recurrence_id: string | null
+  /** When the task last became 'done'; null otherwise, or if it's since moved out of Done. */
+  completed_at: string | null
   created_at: string
   updated_at: string
 }
