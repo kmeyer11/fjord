@@ -52,6 +52,7 @@ const en = {
     loadError: "Couldn't load archive",
     empty: "No archived tasks yet — tasks move here 14 days after they're marked done.",
     completedOn: (date: string) => `Done ${date}`,
+    archivedOn: (date: string) => `Archived ${date}`,
   },
 
   taskModal: {
@@ -64,6 +65,7 @@ const en = {
     descriptionPlaceholder: 'Add a description…',
     fieldCriticality: 'Criticality',
     fieldCreatedDate: 'Created',
+    archiveTask: 'Archive task',
     delete: 'Delete Task',
     deleteMeeting: 'Delete Meeting',
     deleteOccurrence: 'Delete This Occurrence',
@@ -207,6 +209,7 @@ const da: typeof en = {
     loadError: 'Arkivet kunne ikke indlæses',
     empty: 'Ingen arkiverede opgaver endnu — opgaver flyttes hertil 14 dage efter de er markeret som færdige.',
     completedOn: (date: string) => `Færdig ${date}`,
+    archivedOn: (date: string) => `Arkiveret ${date}`,
   },
 
   taskModal: {
@@ -219,6 +222,7 @@ const da: typeof en = {
     descriptionPlaceholder: 'Tilføj en beskrivelse…',
     fieldCriticality: 'Kritikalitet',
     fieldCreatedDate: 'Oprettet',
+    archiveTask: 'Arkivér opgave',
     delete: 'Slet opgave',
     deleteMeeting: 'Slet møde',
     deleteOccurrence: 'Slet denne forekomst',

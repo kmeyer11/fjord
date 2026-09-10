@@ -12,6 +12,7 @@ export default function TaskDetailModal({
   onClose,
   onSave,
   onDelete,
+  onArchive,
 }: {
   task: Task
   onClose: () => void
@@ -24,6 +25,9 @@ export default function TaskDetailModal({
     recurring?: boolean
   }) => Promise<void>
   onDelete: (scope: 'single' | 'future') => Promise<void>
+  /** Manually archive the task on demand. Omit to hide the action entirely
+   * (e.g. when editing a task that's already archived, or a meeting). */
+  onArchive?: () => Promise<void>
 }) {
   const { t, locale } = useLanguage()
   const isMeeting = task.category === 'meeting'
@@ -71,6 +75,17 @@ export default function TaskDetailModal({
     setSubmitting(true)
     try {
       await onDelete(scope)
+      onClose()
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleArchive() {
+    if (!onArchive || submitting) return
+    setSubmitting(true)
+    try {
+      await onArchive()
       onClose()
     } finally {
       setSubmitting(false)
@@ -184,6 +199,17 @@ export default function TaskDetailModal({
               {t.calendar.repeatWeekly}
             </label>
           </div>
+        )}
+
+        {!isMeeting && onArchive && (
+          <button
+            type="button"
+            onClick={handleArchive}
+            disabled={submitting}
+            className="self-center text-[12px] text-text-tertiary hover:text-text-secondary hover:underline disabled:opacity-40"
+          >
+            {t.taskModal.archiveTask}
+          </button>
         )}
 
         {wasRecurring ? (

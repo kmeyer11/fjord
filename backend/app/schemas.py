@@ -64,6 +64,8 @@ class TaskUpdate(BaseModel):
     # Meetings only. True turns this (and future) meeting into a weekly series
     # starting from its due_at; False detaches it and drops future occurrences.
     recurring: bool | None = None
+    # Manual on-demand archive/unarchive, independent of the completed_at rule.
+    archived_at: datetime | None = None
 
 
 class Task(TaskBase):
@@ -73,6 +75,7 @@ class Task(TaskBase):
     project_id: int | None
     recurrence_id: str | None = None
     completed_at: datetime | None = None
+    archived_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -82,6 +82,7 @@ export const api = {
       due_at: string | null
       all_day: boolean
       recurring: boolean
+      archived_at: string | null
     }>,
   ) => request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteTask: (id: number, scope: 'single' | 'future' = 'single') =>

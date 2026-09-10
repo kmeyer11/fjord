@@ -79,6 +79,9 @@ class Task(Base):
     # When the task last transitioned into 'done'; cleared if it moves back out.
     # Drives the project board's auto-archive (see ARCHIVE_AFTER in routers/projects.py).
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    # Set when the user manually archives the task on demand, bypassing the
+    # completed_at/ARCHIVE_AFTER rule entirely (see _is_archived in routers/projects.py).
+    archived_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         UTCDateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow

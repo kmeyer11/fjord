@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -19,6 +20,8 @@ def _archive_cutoff() -> datetime:
 
 
 def _is_archived(task: models.Task) -> bool:
+    if task.archived_at is not None:
+        return True
     return (
         task.status == models.TaskStatus.done
         and task.completed_at is not None
@@ -91,6 +94,7 @@ def list_project_tasks(project_id: int, db: Session = Depends(get_db)):
     return (
         db.query(models.Task)
         .filter(models.Task.project_id == project_id)
+        .filter(models.Task.archived_at.is_(None))
         .filter(
             (models.Task.status != models.TaskStatus.done)
             | (models.Task.completed_at.is_(None))
@@ -103,19 +107,23 @@ def list_project_tasks(project_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{project_id}/tasks/archive", response_model=list[schemas.Task])
 def list_project_archive(project_id: int, db: Session = Depends(get_db)):
-    """Done tasks that have aged out of the board (see ARCHIVE_AFTER above) —
-    still kept, just moved out of the way; reachable via the project's archive button."""
+    """Tasks moved out of the board — either manually archived on demand, or
+    done tasks that aged out (see ARCHIVE_AFTER above); reachable via the
+    project's archive button."""
     _get_project_or_404(project_id, db)
     cutoff = _archive_cutoff()
     return (
         db.query(models.Task)
         .filter(
             models.Task.project_id == project_id,
-            models.Task.status == models.TaskStatus.done,
-            models.Task.completed_at.isnot(None),
-            models.Task.completed_at <= cutoff,
+            (models.Task.archived_at.isnot(None))
+            | (
+                (models.Task.status == models.TaskStatus.done)
+                & models.Task.completed_at.isnot(None)
+                & (models.Task.completed_at <= cutoff)
+            ),
         )
-        .order_by(models.Task.completed_at.desc())
+        .order_by(func.coalesce(models.Task.archived_at, models.Task.completed_at).desc())
         .all()
     )
 
