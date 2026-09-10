@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Task, TaskCriticality } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { dateKey, formatDueDate, toDatetimeLocalValue } from '../lib/date'
+import { dateKey, formatShortDate, toDatetimeLocalValue } from '../lib/date'
 import CriticalityPicker from './CriticalityPicker'
 import DateTimePicker from './DateTimePicker'
 import { RepeatIcon } from './icons'
@@ -141,10 +141,10 @@ export default function TaskDetailModal({
           </div>
         )}
 
-        {!isMeeting && task.due_at && (
+        {!isMeeting && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-medium text-text-secondary">{t.taskModal.fieldDueDate}</span>
-            <p className="text-[15px] text-text">{formatDueDate(new Date(task.due_at), locale)}</p>
+            <span className="text-[13px] font-medium text-text-secondary">{t.taskModal.fieldCreatedDate}</span>
+            <p className="text-[15px] text-text">{formatShortDate(new Date(task.created_at), locale)}</p>
           </div>
         )}
 

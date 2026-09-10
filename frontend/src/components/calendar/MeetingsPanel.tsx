@@ -76,7 +76,7 @@ function DraggableTask({
   onClick?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `backlog-task-${task.id}`,
+    id: `meeting-task-${task.id}`,
     data: { task },
   })
 

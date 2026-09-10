@@ -71,8 +71,8 @@ export function formatMonth(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 }
 
-/** Short display date for a task's due date, e.g. "Sep 10" — no time. */
-export function formatDueDate(date: Date, locale: string): string {
+/** Short display date, e.g. "Sep 10" — no time. */
+export function formatShortDate(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
 }
 
