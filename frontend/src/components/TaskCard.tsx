@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
+import { formatDueDate } from '../lib/date'
 import { CRITICALITY_STYLES } from './CriticalityPicker'
 
 export default function TaskCard({ task, dense, onClick }: { task: Task; dense?: boolean; onClick?: () => void }) {
@@ -39,9 +40,7 @@ export default function TaskCard({ task, dense, onClick }: { task: Task; dense?:
             {task.criticality}
           </span>
           {task.due_at && (
-            <span className="text-[11px] text-text-tertiary">
-              {new Date(task.due_at).toLocaleString(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-            </span>
+            <span className="text-[11px] text-text-tertiary">{formatDueDate(new Date(task.due_at), locale)}</span>
           )}
         </div>
       )}

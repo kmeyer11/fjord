@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Task, TaskCriticality } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { dateKey, toDatetimeLocalValue } from '../lib/date'
+import { dateKey, formatDueDate, toDatetimeLocalValue } from '../lib/date'
 import CriticalityPicker from './CriticalityPicker'
 import DateTimePicker from './DateTimePicker'
 import { RepeatIcon } from './icons'
@@ -25,7 +25,7 @@ export default function TaskDetailModal({
   }) => Promise<void>
   onDelete: (scope: 'single' | 'future') => Promise<void>
 }) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const isMeeting = task.category === 'meeting'
   // Whether the saved task is (still) part of a series — drives the delete
   // buttons below, which act on stored state, not the pending edit.
@@ -138,6 +138,13 @@ export default function TaskDetailModal({
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium text-text-secondary">{t.taskModal.fieldCriticality}</span>
             <CriticalityPicker value={criticality} onChange={setCriticality} />
+          </div>
+        )}
+
+        {!isMeeting && task.due_at && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium text-text-secondary">{t.taskModal.fieldDueDate}</span>
+            <p className="text-[15px] text-text">{formatDueDate(new Date(task.due_at), locale)}</p>
           </div>
         )}
 
