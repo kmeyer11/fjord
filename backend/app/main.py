@@ -28,10 +28,12 @@ app.add_middleware(
 # The PIN gate protects the data API; auth's own routes stay open (you need to
 # be able to log in before you're logged in), and the .ics feed is checked by
 # its own token instead — Apple's calendar client can't do a cookie login.
+# require_session_or_api_token also accepts a long-lived bearer token, for
+# programmatic clients like the MCP server (see app/generate_api_token.py).
 app.include_router(auth_router.router)
-app.include_router(projects.router, dependencies=[Depends(auth.require_session)])
-app.include_router(tasks.router, dependencies=[Depends(auth.require_session)])
-app.include_router(calendar.router, dependencies=[Depends(auth.require_session)])
+app.include_router(projects.router, dependencies=[Depends(auth.require_session_or_api_token)])
+app.include_router(tasks.router, dependencies=[Depends(auth.require_session_or_api_token)])
+app.include_router(calendar.router, dependencies=[Depends(auth.require_session_or_api_token)])
 app.include_router(ics_feed.router)
 
 

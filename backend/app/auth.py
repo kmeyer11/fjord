@@ -119,3 +119,20 @@ def require_session(request: Request, response: Response) -> None:
     issued_at = decode_session_token(token, app_secrets.session_secret) if token else None
     if issued_at is not None and (time.time() - issued_at) > SESSION_REFRESH_AFTER:
         set_session_cookie(response, app_secrets.session_secret)
+
+
+def require_session_or_api_token(request: Request, response: Response) -> None:
+    """Same gate as require_session, but also accepts a long-lived
+    `Authorization: Bearer <api_token>` header — for programmatic clients
+    (e.g. the MCP server) that can't do a browser-style PIN login/cookie
+    refresh. The bearer path skips the cookie-refresh side effect below since
+    there's no cookie to refresh."""
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.lower().startswith("bearer "):
+        app_secrets = config_store.load()
+        candidate = auth_header[len("bearer ") :].strip()
+        if app_secrets.api_token and hmac.compare_digest(candidate, app_secrets.api_token):
+            return
+        raise HTTPException(status_code=401, detail="Invalid API token")
+
+    require_session(request, response)
