@@ -1,5 +1,6 @@
 """Generate (or rotate) the long-lived API token used by programmatic
-clients, e.g. the MCP server (see mcp-server/README.md).
+clients, e.g. the MCP server (see repo root README's "MCP integration
+(Claude)" section).
 
     cd backend && .venv/bin/python -m app.generate_api_token
 

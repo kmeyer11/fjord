@@ -1,6 +1,6 @@
 """MCP server exposing Fjord's projects/tasks/meetings API as tools, so a
 Claude session can create and manage them directly (see repo root README's
-"Claude integration" section for setup).
+"MCP integration (Claude)" section for setup).
 
 Talks to a running Fjord backend over HTTP using a long-lived bearer token
 (generate one with `cd backend && .venv/bin/python -m app.generate_api_token`

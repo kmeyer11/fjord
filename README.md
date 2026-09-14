@@ -197,6 +197,38 @@ from Settings, which is harmless, just an inconvenience.
 The app is open (no login) until you set a PIN — the login screen doubles as
 the PIN-setup screen the first time. Change it later from Settings.
 
+## MCP integration (Claude)
+
+`mcp-server/` exposes Fjord's projects/tasks/meetings API as MCP tools, so a
+Claude session (Claude Code, claude.ai) can create and manage them directly —
+see `mcp-server/server.py` for the full tool list.
+
+1. Generate a long-lived API token against the backend instance you want to
+   point at (separate from the browser's PIN/session login):
+
+   ```bash
+   cd backend && .venv/bin/python -m app.generate_api_token
+   ```
+
+   Prints the token once — copy it. Rerunning this replaces the old token, so
+   any client already configured with it will need updating.
+
+2. Install the MCP server's own dependencies:
+
+   ```bash
+   cd mcp-server
+   python3 -m venv .venv
+   .venv/bin/pip install -r requirements.txt
+   ```
+
+3. Configure your MCP client (e.g. Claude Code's MCP settings) to run it over
+   stdio, with:
+
+   - `FJORD_API_URL` — the backend's base URL, e.g. `http://localhost:8000` or
+     a Tailscale hostname for the homelab instance
+   - `FJORD_API_TOKEN` — the token from step 1
+   - command: `.venv/bin/python server.py`, working directory `mcp-server/`
+
 ## Project layout
 
 ```
@@ -221,6 +253,8 @@ frontend/
     components/calendar/  Week grid, day columns, backlog drag panel
     lib/                 Date helpers, responsive breakpoint hook
     pages/               Dashboard, Backlog board, Calendar, Login, Settings
+mcp-server/
+  server.py             MCP tool server exposing projects/tasks/meetings to Claude (see "MCP integration" above)
 scripts/
   dev-snapshot-db.sh    Pull a safe local copy of the live container's DB (see "Testing locally against real data")
 ```
