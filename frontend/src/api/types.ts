@@ -35,6 +35,8 @@ export interface Task {
   recurrence_id: string | null
   /** When the task last became 'done'; null otherwise, or if it's since moved out of Done. */
   completed_at: string | null
+  /** Set when the user manually archived the task on demand; null otherwise. */
+  archived_at: string | null
   created_at: string
   updated_at: string
 }

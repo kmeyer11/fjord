@@ -1,12 +1,13 @@
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { ProjectWithCounts, Task, TaskStatus } from '../api/types'
 import BoardColumn from '../components/BoardColumn'
 import EditProjectModal from '../components/EditProjectModal'
-import { ArchiveIcon, ChevronLeftIcon, PencilIcon, PlusIcon, StarIcon } from '../components/icons'
+import { PlusIcon } from '../components/icons'
 import NewTaskModal from '../components/NewTaskModal'
+import ProjectHeader from '../components/ProjectHeader'
 import TaskDetailModal from '../components/TaskDetailModal'
 import { useLanguage } from '../i18n/LanguageContext'
 
@@ -72,45 +73,17 @@ export default function ProjectBoard() {
 
   return (
     <div className="flex h-full flex-col p-4 md:p-8">
-      <div className="mb-5 flex items-center gap-1.5">
-        <Link to="/projects" className="-ml-1.5 rounded-full p-1.5 text-accent hover:bg-black/[0.04]">
-          <ChevronLeftIcon className="size-5" />
-        </Link>
-        <span
-          className="size-2.5 rounded-full"
-          style={{ backgroundColor: project.color, boxShadow: `0 0 0 4px ${project.color}26` }}
-        />
-        <h1 className="text-[20px] font-bold tracking-tight text-text">{project.name}</h1>
-        <button
-          onClick={async () => {
-            const updated = await api.updateProject(id, { favorite: !project.favorite })
-            setProject(updated)
-            window.dispatchEvent(new Event('fjord:projects-changed'))
-          }}
-          aria-label={project.favorite ? t.dashboard.unfavorite : t.dashboard.favorite}
-          className={[
-            'rounded-full p-1.5 transition-colors hover:bg-black/[0.04]',
-            project.favorite ? 'text-amber-400' : 'text-text-tertiary hover:text-text-secondary',
-          ].join(' ')}
-        >
-          <StarIcon className="size-4" filled={project.favorite} />
-        </button>
-        <button
-          onClick={() => setEditingProject(true)}
-          aria-label={t.editProjectModal.title}
-          className="rounded-full p-1.5 text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
-        >
-          <PencilIcon className="size-4" />
-        </button>
-        <Link
-          to={`/projects/${id}/archive`}
-          aria-label={t.board.archive}
-          title={t.board.archive}
-          className="rounded-full p-1.5 text-text-tertiary hover:bg-black/[0.04] hover:text-text-secondary"
-        >
-          <ArchiveIcon className="size-4" />
-        </Link>
-      </div>
+      <ProjectHeader
+        project={project}
+        id={id}
+        view="board"
+        onToggleFavorite={async () => {
+          const updated = await api.updateProject(id, { favorite: !project.favorite })
+          setProject(updated)
+          window.dispatchEvent(new Event('fjord:projects-changed'))
+        }}
+        onEditProject={() => setEditingProject(true)}
+      />
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto md:flex-row md:overflow-visible">
@@ -148,6 +121,10 @@ export default function ProjectBoard() {
           }}
           onDelete={async () => {
             await api.deleteTask(editingTask.id)
+            setTasks((prev) => (prev ? prev.filter((t) => t.id !== editingTask.id) : prev))
+          }}
+          onArchive={async () => {
+            await api.updateTask(editingTask.id, { archived_at: new Date().toISOString() })
             setTasks((prev) => (prev ? prev.filter((t) => t.id !== editingTask.id) : prev))
           }}
         />

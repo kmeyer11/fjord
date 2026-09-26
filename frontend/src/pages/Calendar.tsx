@@ -130,7 +130,7 @@ export default function Calendar() {
 
     const due = new Date(slot.date)
     due.setHours(slot.hour, 0, 0, 0)
-    const update: Partial<Pick<Task, 'status' | 'due_at'>> = { status: 'in_progress', due_at: due.toISOString() }
+    const update: Partial<Pick<Task, 'due_at'>> = { due_at: due.toISOString() }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, ...update } : t)))
     try {

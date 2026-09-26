@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Task, TaskCriticality } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
-import { dateKey, toDatetimeLocalValue } from '../lib/date'
+import { dateKey, formatShortDate, toDatetimeLocalValue } from '../lib/date'
 import CriticalityPicker from './CriticalityPicker'
 import DateTimePicker from './DateTimePicker'
 import { RepeatIcon } from './icons'
@@ -12,6 +12,7 @@ export default function TaskDetailModal({
   onClose,
   onSave,
   onDelete,
+  onArchive,
 }: {
   task: Task
   onClose: () => void
@@ -24,8 +25,11 @@ export default function TaskDetailModal({
     recurring?: boolean
   }) => Promise<void>
   onDelete: (scope: 'single' | 'future') => Promise<void>
+  /** Manually archive the task on demand. Omit to hide the action entirely
+   * (e.g. when editing a task that's already archived, or a meeting). */
+  onArchive?: () => Promise<void>
 }) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const isMeeting = task.category === 'meeting'
   // Whether the saved task is (still) part of a series — drives the delete
   // buttons below, which act on stored state, not the pending edit.
@@ -71,6 +75,17 @@ export default function TaskDetailModal({
     setSubmitting(true)
     try {
       await onDelete(scope)
+      onClose()
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleArchive() {
+    if (!onArchive || submitting) return
+    setSubmitting(true)
+    try {
+      await onArchive()
       onClose()
     } finally {
       setSubmitting(false)
@@ -141,6 +156,13 @@ export default function TaskDetailModal({
           </div>
         )}
 
+        {!isMeeting && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium text-text-secondary">{t.taskModal.fieldCreatedDate}</span>
+            <p className="text-[15px] text-text">{formatShortDate(new Date(task.created_at), locale)}</p>
+          </div>
+        )}
+
         {isMeeting && (
           <div className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-[13px] font-medium text-text-secondary">
@@ -177,6 +199,17 @@ export default function TaskDetailModal({
               {t.calendar.repeatWeekly}
             </label>
           </div>
+        )}
+
+        {!isMeeting && onArchive && (
+          <button
+            type="button"
+            onClick={handleArchive}
+            disabled={submitting}
+            className="self-center text-[12px] text-text-tertiary hover:text-text-secondary hover:underline disabled:opacity-40"
+          >
+            {t.taskModal.archiveTask}
+          </button>
         )}
 
         {wasRecurring ? (

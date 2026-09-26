@@ -114,8 +114,8 @@ def _extend_recurring_series(db: Session) -> None:
 
 @router.get("", response_model=list[schemas.Task])
 def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(get_db)):
-    """All tasks across every project — the calendar view and its backlog panel
-    need a cross-project list, unlike the per-project listing under /api/projects."""
+    """All tasks across every project — the calendar view needs a cross-project
+    list of meetings, unlike the per-project listing under /api/projects."""
     _extend_recurring_series(db)
     query = db.query(models.Task)
     if status is not None:
