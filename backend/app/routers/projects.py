@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
+from app.routers.tasks import _delete_tasks
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -83,6 +84,9 @@ def update_project(project_id: int, payload: schemas.ProjectUpdate, db: Session 
 @router.delete("/{project_id}", status_code=204)
 def delete_project(project_id: int, db: Session = Depends(get_db)):
     project = _get_project_or_404(project_id, db)
+    # Delete the tasks explicitly (rather than via the relationship cascade)
+    # so any published meetings among them get a feed cancellation.
+    _delete_tasks(db, list(project.tasks))
     db.delete(project)
     db.commit()
 
