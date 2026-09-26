@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app import auth
 from app.config import settings
 from app.routers import auth as auth_router
-from app.routers import calendar, ics_feed, projects, tasks
+from app.routers import calendar, ics_feed, preferences, projects, tasks
 
 # Schema creation/changes are Alembic's job (see backend/alembic/), not
 # main.py's — run `alembic upgrade head` before starting the server (the
@@ -34,6 +34,7 @@ app.include_router(auth_router.router)
 app.include_router(projects.router, dependencies=[Depends(auth.require_session_or_api_token)])
 app.include_router(tasks.router, dependencies=[Depends(auth.require_session_or_api_token)])
 app.include_router(calendar.router, dependencies=[Depends(auth.require_session_or_api_token)])
+app.include_router(preferences.router, dependencies=[Depends(auth.require_session_or_api_token)])
 app.include_router(ics_feed.router)
 
 

@@ -111,3 +111,10 @@ class ExternalEvent(BaseModel):
 class ICloudCredentials(BaseModel):
     username: str
     app_password: str
+
+
+class Preferences(BaseModel):
+    # A preset name from the frontend's fjord-scene/presets.ts; the frontend
+    # falls back to its default for names it doesn't know, so only the shape
+    # is checked here. None clears the choice.
+    scene: str | None = Field(default=None, max_length=40, pattern=r"^[a-z0-9-]+$")

@@ -1,4 +1,4 @@
-import type { ExternalEvent, Project, ProjectWithCounts, Task, TaskCriticality, TaskStatus } from './types'
+import type { ExternalEvent, Preferences, Project, ProjectWithCounts, Task, TaskCriticality, TaskStatus } from './types'
 
 export const UNAUTHORIZED_EVENT = 'fjord:unauthorized'
 
@@ -91,6 +91,10 @@ export const api = {
     recurrenceId: string,
     data: { title: string; weekday: number; time: string; all_day?: boolean },
   ) => request<Task[]>(`/tasks/series/${recurrenceId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  getPreferences: () => request<Preferences>('/preferences'),
+  updatePreferences: (data: Preferences) =>
+    request<Preferences>('/preferences', { method: 'PUT', body: JSON.stringify(data) }),
 
   listExternalEvents: (start: Date, end: Date, force = false) =>
     request<ExternalEvent[]>(
