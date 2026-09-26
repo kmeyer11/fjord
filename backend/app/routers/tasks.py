@@ -73,6 +73,20 @@ def _generate_following_occurrences(
         next_due_at = _next_week(next_due_at)
 
 
+def _delete_tasks(db: Session, tasks: list[models.Task]) -> None:
+    """Deletes tasks, first recording a TaskTombstone for any that were on the
+    published .ics feed (same filter as ics_feed.py), so the feed can publish
+    an explicit cancellation instead of the meeting silently disappearing."""
+    for task in tasks:
+        if (
+            task.category == models.TaskCategory.meeting
+            and task.status == models.TaskStatus.in_progress
+            and task.due_at is not None
+        ):
+            db.merge(models.TaskTombstone(task_id=task.id, title=task.title, due_at=task.due_at))
+        db.delete(task)
+
+
 def _stop_series(db: Session, recurrence_id: str) -> None:
     """Detaches every remaining row of a series from recurrence_id. Needed
     whenever a series is shortened (future occurrences dropped) — otherwise
@@ -182,11 +196,16 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
         # Drop the rest of the series from here on and detach every remaining
         # row (including past occurrences) — see _stop_series.
         old_recurrence_id = task.recurrence_id
-        db.query(models.Task).filter(
-            models.Task.recurrence_id == old_recurrence_id,
-            models.Task.id != task.id,
-            models.Task.due_at > task.due_at,
-        ).delete(synchronize_session=False)
+        _delete_tasks(
+            db,
+            db.query(models.Task)
+            .filter(
+                models.Task.recurrence_id == old_recurrence_id,
+                models.Task.id != task.id,
+                models.Task.due_at > task.due_at,
+            )
+            .all(),
+        )
         _stop_series(db, old_recurrence_id)
 
     db.commit()
@@ -208,9 +227,10 @@ def update_meeting_series(recurrence_id: str, payload: schemas.SeriesUpdate, db:
     title = payload.title if payload.title is not None else template_source.title
     all_day = payload.all_day if payload.all_day is not None else template_source.all_day
 
-    db.query(models.Task).filter(
-        models.Task.recurrence_id == recurrence_id, models.Task.due_at >= now
-    ).delete(synchronize_session=False)
+    _delete_tasks(
+        db,
+        db.query(models.Task).filter(models.Task.recurrence_id == recurrence_id, models.Task.due_at >= now).all(),
+    )
 
     anchor = models.Task(
         project_id=None,
@@ -240,11 +260,13 @@ def delete_task(task_id: int, scope: Literal["single", "future"] = "single", db:
     task = _get_task_or_404(task_id, db)
     if scope == "future" and task.recurrence_id is not None:
         recurrence_id = task.recurrence_id
-        db.query(models.Task).filter(
-            models.Task.recurrence_id == recurrence_id,
-            models.Task.due_at >= task.due_at,
-        ).delete(synchronize_session=False)
+        _delete_tasks(
+            db,
+            db.query(models.Task)
+            .filter(models.Task.recurrence_id == recurrence_id, models.Task.due_at >= task.due_at)
+            .all(),
+        )
         _stop_series(db, recurrence_id)
     else:
-        db.delete(task)
+        _delete_tasks(db, [task])
     db.commit()
