@@ -54,3 +54,9 @@ export interface ExternalEvent {
   location: string | null
   description: string | null
 }
+
+/** Per-user preferences stored server-side (GET/PUT /api/preferences). */
+export interface Preferences {
+  /** Front-page scene preset name; null = the frontend's default. */
+  scene: string | null
+}

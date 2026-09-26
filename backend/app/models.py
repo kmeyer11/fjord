@@ -111,3 +111,15 @@ class TaskTombstone(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     due_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     deleted_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=datetime.utcnow)
+
+
+class AppSetting(Base):
+    """User preferences (currently just the front-page scene) as JSON values
+    under a string key — one generic table, so a new preference needs no
+    migration. Not for secrets: those live in the AppSecrets JSON file
+    (config_store.py), deliberately outside this database."""
+
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(50), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, nullable=False)

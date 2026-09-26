@@ -5,6 +5,12 @@ export const LOCALE: Record<Language, string> = { en: 'en-US', da: 'da-DK' }
 const en = {
   nav: { projects: 'Projects', calendar: 'Calendar', settings: 'Settings' },
 
+  home: {
+    greeting: { morning: 'Good morning', day: 'Good afternoon', evening: 'Good evening', night: 'Good night' },
+    more: (n: number) => `+${n} more`,
+    empty: 'Calm waters today.',
+  },
+
   dashboard: {
     title: 'Projects',
     newProject: 'New Project',
@@ -161,6 +167,12 @@ const en = {
 
 const da: typeof en = {
   nav: { projects: 'Projekter', calendar: 'Kalender', settings: 'Indstillinger' },
+
+  home: {
+    greeting: { morning: 'Godmorgen', day: 'God eftermiddag', evening: 'God aften', night: 'Godnat' },
+    more: (n: number) => `+${n} mere`,
+    empty: 'Stille vand i dag.',
+  },
 
   dashboard: {
     title: 'Projekter',
