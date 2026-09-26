@@ -24,6 +24,11 @@ class AppSecrets:
     pin_hash: str | None = None
     icloud_username: str | None = None
     icloud_app_password_enc: str | None = None
+    # Long-lived bearer token for programmatic clients (e.g. the MCP server) —
+    # deliberately separate from the PIN/session-cookie flow, which is built
+    # for a browser (short-lived, IP-lockout on guesses). None until generated
+    # via `python -m app.generate_api_token`.
+    api_token: str | None = None
 
 
 def load() -> AppSecrets:
