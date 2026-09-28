@@ -1,8 +1,7 @@
 # Fjord
 
-A single-user web app for tracking projects, task backlogs, and a calendar —
-personal projects like a homelab build and scrapers, plus work backlog, all in
-one place. Built for Kristian, mobile-first, dark mode only.
+A single-user web app for tracking projects, task backlogs, and a calendar in
+one place. Built mobile-first with a dark interface.
 
 See the full project spec in this repo's history / project notes for the
 complete feature list and build order. Short version:

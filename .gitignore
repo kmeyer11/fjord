@@ -3,11 +3,24 @@ backend/.venv/
 mcp-server/.venv/
 __pycache__/
 *.pyc
-backend/fjord.db
-backend/.env
-backend/.fjord_credentials.key
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.key
+*.pem
+*.p12
+*.pfx
 backend/.fjord_secrets.json
 backend/.dev-data/
+
+# Local databases and SQLite sidecars
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
 
 # Node / frontend
 frontend/node_modules/
@@ -18,3 +31,4 @@ npm-debug.log*
 .DS_Store
 .vscode/
 .idea/
+.claude/settings.local.json
