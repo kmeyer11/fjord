@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -6,9 +7,12 @@ from icalendar import Calendar, Event
 from sqlalchemy.orm import Session
 
 from app import config_store, models
+from app.config import settings
 from app.database import get_db
 
 router = APIRouter(tags=["ics-feed"])
+
+_LOCAL_TZ = ZoneInfo(settings.local_timezone)
 
 # Tasks don't carry a duration, so each gets a fixed-length block on the
 # published feed — long enough to be visible on a subscribed calendar, short
@@ -55,8 +59,16 @@ def fjord_ics_feed(token: str, db: Session = Depends(get_db)):
         event = Event()
         event.add("uid", _uid(task.id))
         event.add("summary", task.title)
-        event.add("dtstart", task.due_at)
-        event.add("dtend", task.due_at + _EVENT_DURATION)
+        if task.all_day:
+            # A date (not datetime) value is written as VALUE=DATE, which is
+            # what makes subscribers show it as all-day. Taken in local time
+            # since all-day meetings are stored as local midnight in UTC.
+            day = task.due_at.astimezone(_LOCAL_TZ).date()
+            event.add("dtstart", day)
+            event.add("dtend", day + timedelta(days=1))
+        else:
+            event.add("dtstart", task.due_at)
+            event.add("dtend", task.due_at + _EVENT_DURATION)
         event.add("dtstamp", task.updated_at)
         if task.description:
             event.add("description", task.description)

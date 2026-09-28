@@ -155,12 +155,12 @@ export default function MeetingsPanel({
               onClick={onTaskClick ? () => onTaskClick(task) : undefined}
               subtitle={
                 task.due_at
-                  ? new Date(task.due_at).toLocaleString(locale, {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })
+                  ? new Date(task.due_at).toLocaleString(
+                      locale,
+                      task.all_day
+                        ? { month: 'short', day: 'numeric' }
+                        : { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+                    )
                   : undefined
               }
             />
@@ -181,9 +181,11 @@ export default function MeetingsPanel({
                         color={taskColor(task, projectColors)}
                         onClick={onEditSeries ? () => onEditSeries(task) : undefined}
                         subtitle={
-                          task.due_at
-                            ? new Date(task.due_at).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
-                            : undefined
+                          task.all_day
+                            ? t.calendar.allDay
+                            : task.due_at
+                              ? new Date(task.due_at).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
+                              : undefined
                         }
                       />
                     ))}
