@@ -18,9 +18,10 @@ Apple's calendar client can't do a cookie login, so this route is checked by its
 
 - One route: `GET /calendar/fjord.ics?token=...`
 - Queries `Task` where `status=in_progress`, `due_at` not null, `category=meeting` — i.e. only upcoming meetings, never plain tasks or done/backlog items
-- Each task gets a fixed 30-minute block (`_EVENT_DURATION`) since tasks don't carry a duration
+- Each timed task gets a fixed 30-minute block (`_EVENT_DURATION`) since tasks don't carry a duration; `all_day` tasks are published as `VALUE=DATE` events (local date, one day long)
+- Deleted meetings are republished as `STATUS:CANCELLED` from `TaskTombstone` for `_TOMBSTONE_RETENTION`
 
-Citations: `backend/app/routers/ics_feed.py:1-54`
+Citations: `backend/app/routers/ics_feed.py` (updated 2026-09-28)
 
 ## Connected to
 

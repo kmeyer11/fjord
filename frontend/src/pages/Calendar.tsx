@@ -129,7 +129,8 @@ export default function Calendar() {
     if (!task || !slot) return
 
     const due = new Date(slot.date)
-    due.setHours(slot.hour, 0, 0, 0)
+    // An all-day meeting only changes day — keep it at local midnight.
+    due.setHours(task.all_day ? 0 : slot.hour, 0, 0, 0)
     const update: Partial<Pick<Task, 'due_at'>> = { due_at: due.toISOString() }
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, ...update } : t)))

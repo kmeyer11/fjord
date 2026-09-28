@@ -239,7 +239,9 @@ def update_meeting_series(recurrence_id: str, payload: schemas.SeriesUpdate, db:
         category=models.TaskCategory.meeting,
         status=models.TaskStatus.in_progress,
         criticality=template_source.criticality,
-        due_at=_next_occurrence(payload.weekday, payload.time, now),
+        # All-day meetings are stored at local midnight (as the create modals
+        # send them); the hidden time picker's stale value must not leak in.
+        due_at=_next_occurrence(payload.weekday, "00:00" if all_day else payload.time, now),
         all_day=all_day,
         recurrence_id=recurrence_id,
     )

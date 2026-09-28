@@ -46,7 +46,7 @@ export default function SeriesEditModal({
     if (!canSave) return
     setSubmitting(true)
     try {
-      const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+      const time = allDay ? '00:00' : `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
       await onSave({ title: title.trim(), weekday, time, all_day: allDay })
       onClose()
     } finally {
