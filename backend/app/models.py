@@ -91,26 +91,10 @@ class Task(Base):
 
     __table_args__ = (
         CheckConstraint("criticality BETWEEN 1 AND 5", name="ck_tasks_criticality_range"),
-        # Never reuse a deleted id — it's the .ics feed event's UID (see TaskTombstone).
+        # Never reuse a deleted id — it's the .ics feed event's UID (see routers/ics_feed.py).
         {"sqlite_autoincrement": True},
     )
 
-
-class TaskTombstone(Base):
-    """A published meeting that was deleted, kept around briefly so the .ics
-    feed (see routers/ics_feed.py) can publish an explicit STATUS:CANCELLED
-    event for it. Deleting the Task row alone just makes it vanish from the
-    feed's query results next time it's fetched — most calendar apps that
-    subscribe to a feed URL only add events they see, and never notice one
-    that quietly stops appearing, so the cancellation needs to be published
-    on purpose."""
-
-    __tablename__ = "task_tombstones"
-
-    task_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
-    due_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
-    deleted_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=datetime.utcnow)
 
 
 class AppSetting(Base):
