@@ -50,6 +50,14 @@ if assets_dir.is_dir():
 
 @app.get("/{full_path:path}")
 def serve_frontend(full_path: str):
+    # Files Vite copies from frontend/public/ (icons, manifest) sit at the dist
+    # root. Serve them as-is, and unauthenticated: iOS fetches the home-screen
+    # icon without cookies. Everything else falls through to the SPA.
+    dist_dir = settings.frontend_dist_dir.resolve()
+    candidate = (dist_dir / full_path).resolve()
+    if full_path and candidate.parent == dist_dir and candidate.is_file():
+        return FileResponse(candidate)
+
     index_file = settings.frontend_dist_dir / "index.html"
     if index_file.is_file():
         return FileResponse(index_file)
