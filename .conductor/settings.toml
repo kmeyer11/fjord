@@ -1,0 +1,13 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+[scripts]
+setup = "./scripts/conductor-setup.sh"
+# Each workspace gets its own ports, venv, node_modules, and SQLite database,
+# so workspaces can run side by side.
+run_mode = "concurrent"
+
+[scripts.run.dev]
+available_in = [ "local" ]
+command = "./scripts/conductor-run.sh"
+default = true
+icon = "play"

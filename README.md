@@ -98,6 +98,17 @@ Everything the script writes (`backend/.env`, `backend/.dev-data/`,
 `frontend/.env.local`) is gitignored. Re-run the script anytime you want a
 fresher copy of the live data.
 
+### Working in Conductor
+
+`.conductor/settings.toml` configures [Conductor](https://conductor.build)
+workspaces. `scripts/conductor-setup.sh` runs in each new workspace. It
+creates the venv, installs npm packages, runs migrations, and gives the
+workspace its own database under `backend/.dev-data/`. If the main checkout
+has a snapshot from `dev-snapshot-db.sh`, the workspace starts from a copy of
+it. The **Run** button (`scripts/conductor-run.sh`) starts the backend on
+`$CONDUCTOR_PORT + 1` and the Vite dev server on `$CONDUCTOR_PORT`, so
+several workspaces can run side by side.
+
 ### Production (single process)
 
 ```bash
