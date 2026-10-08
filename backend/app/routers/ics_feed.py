@@ -1,30 +1,20 @@
-from datetime import timedelta
-from zoneinfo import ZoneInfo
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
-from icalendar import Calendar, Event
+from icalendar import Calendar
 from sqlalchemy.orm import Session
 
-from app import config_store, models
-from app.config import settings
+from app import calendar_push, config_store
 from app.database import get_db
 
 router = APIRouter(tags=["ics-feed"])
 
-_LOCAL_TZ = ZoneInfo(settings.local_timezone)
-
-# Tasks don't carry a duration, so each gets a fixed-length block on the
-# published feed — long enough to be visible on a subscribed calendar, short
-# enough not to visually overlap the next one.
-_EVENT_DURATION = timedelta(minutes=30)
-
-def _uid(task_id: int) -> str:
-    return f"fjord-task-{task_id}@fjord.local"
-
 
 @router.get("/calendar/fjord.ics")
 def fjord_ics_feed(token: str, db: Session = Depends(get_db)):
+    """Read-only subscription feed of Fjord's meetings. Superseded by writing
+    straight into a calendar of the user's choice (app.calendar_push), but
+    kept so an existing subscription doesn't start failing; both use the same
+    event builder, so they never disagree."""
     if token != config_store.load().ics_token:
         raise HTTPException(status_code=403, detail="Invalid feed token")
 
@@ -33,34 +23,8 @@ def fjord_ics_feed(token: str, db: Session = Depends(get_db)):
     cal.add("version", "2.0")
     cal.add("x-wr-calname", "Fjord")
     cal.add("x-published-ttl", "PT1H")
-
-    tasks = (
-        db.query(models.Task)
-        .filter(
-            models.Task.status == models.TaskStatus.in_progress,
-            models.Task.due_at.isnot(None),
-            models.Task.category == models.TaskCategory.meeting,
-        )
-        .all()
-    )
-    for task in tasks:
-        event = Event()
-        event.add("uid", _uid(task.id))
-        event.add("summary", task.title)
-        if task.all_day:
-            # A date (not datetime) value is written as VALUE=DATE, which is
-            # what makes subscribers show it as all-day. Taken in local time
-            # since all-day meetings are stored as local midnight in UTC.
-            day = task.due_at.astimezone(_LOCAL_TZ).date()
-            event.add("dtstart", day)
-            event.add("dtend", day + timedelta(days=1))
-        else:
-            event.add("dtstart", task.due_at)
-            event.add("dtend", task.due_at + _EVENT_DURATION)
-        event.add("dtstamp", task.updated_at)
-        if task.description:
-            event.add("description", task.description)
-        cal.add_component(event)
+    for task in calendar_push.published_meetings(db):
+        cal.add_component(calendar_push.task_event(task))
 
     return Response(
         content=cal.to_ical(),

@@ -19,7 +19,10 @@ CalDAV has no push/webhook, so there's no way to be notified of upstream changes
 - Module-level cache: `_cache: dict[(username, date-range) -> (fetched_at, events)]`, `_last_error`, `_last_synced_at`
 - Credentials resolved in priority order: local encrypted secrets store (set via Settings page) → environment variables (`app.config`, for headless deploys) — `get_credentials()`, `caldav_client.py:31`
 
-Citations: `backend/app/caldav_client.py:1-40`
+- `list_calendars()` — VEVENT-capable calendars, for the Settings target picker
+- `fetch_events` skips `fjord-task-*` UIDs (`is_fjord_event`) — those are Fjord's own meetings written by `calendar-push.md`, already shown as tasks
+
+Citations: `backend/app/caldav_client.py:1-40` (updated 2026-10-08)
 
 ## Connected to
 
@@ -30,7 +33,7 @@ Citations: `backend/app/caldav_client.py:1-40`
 
 ## If you change this
 
-- **Hits:** `routers/calendar.py` (all three endpoints call into this module), `schemas.ExternalEvent`, frontend calendar UI's external-event rendering
+- **Hits:** `routers/calendar.py` (every endpoint calls into this module), `calendar_push.py` (borrows `get_credentials`), `schemas.ExternalEvent`, frontend calendar UI's external-event rendering
 - **Does not hit:** `Task`/`Project` tables, recurrence expansion, ICS export (that reads `Task` rows, not this cache)
 
 ## Surfaces

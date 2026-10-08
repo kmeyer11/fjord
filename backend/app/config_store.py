@@ -1,6 +1,6 @@
 """Local, file-based store for security-sensitive app state — PIN hash,
 session-signing secret, .ics feed token, iCloud credentials (app password
-encrypted, see app.secrets_store).
+encrypted, see app.secrets_store) and the calendar Fjord writes into.
 
 Deliberately kept out of fjord.db, which holds only your projects and
 tasks. If that database is ever backed up, exported, or copied elsewhere,
@@ -24,6 +24,10 @@ class AppSecrets:
     pin_hash: str | None = None
     icloud_username: str | None = None
     icloud_app_password_enc: str | None = None
+    # The iCloud calendar Fjord writes its meetings into (see
+    # app.calendar_push). The name is only for display on the Settings page.
+    icloud_calendar_url: str | None = None
+    icloud_calendar_name: str | None = None
     # Long-lived bearer token for programmatic clients (e.g. the MCP server) —
     # deliberately separate from the PIN/session-cookie flow, which is built
     # for a browser (short-lived, IP-lockout on guesses). None until generated

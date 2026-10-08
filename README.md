@@ -9,7 +9,8 @@ complete feature list and build order. Short version:
 - **Projects dashboard** — cards with a color tag and backlog/scheduled/done counts.
 - **Backlog board** — kanban-lite (Backlog / Scheduled / Done) with drag-and-drop.
 - **Calendar view** — week view (single-day on mobile) mixing scheduled tasks with
-  read-only Apple Calendar events, plus a subscribable `.ics` feed for scheduled tasks.
+  read-only Apple Calendar events. Meetings are also written into an Apple Calendar
+  calendar of your choice.
 - **PIN login** — single 4–6 digit PIN gate, no multi-user support.
 
 ## Stack
@@ -148,8 +149,8 @@ head` automatically before the server starts.
 
 ### Apple Calendar sync (optional)
 
-Inbound sync (reading your existing calendars) needs an iCloud app-specific
-password — generate one at [appleid.apple.com](https://appleid.apple.com),
+Apple Calendar sync (showing your calendars in Fjord, and writing Fjord's
+meetings into one of them) needs an iCloud app-specific password — generate one at [appleid.apple.com](https://appleid.apple.com),
 never your main Apple ID password.
 
 **Settings page** (recommended — no server access needed, good for anyone
@@ -167,9 +168,18 @@ export FJORD_ICLOUD_USERNAME="you@icloud.com"
 export FJORD_ICLOUD_APP_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 ```
 
+Once connected, pick a calendar under "Put meetings in" on the Settings page
+(e.g. an existing "Work" calendar). Meetings you create, edit, or delete in
+Fjord are created, changed, or deleted there too; events you made yourself in
+that calendar are left alone. Fjord's database stays the source of truth:
+edits made to Fjord's events directly in Apple Calendar aren't read back, and
+are overwritten the next time the meeting changes in Fjord (or on "Refresh
+now"). Switching to another calendar moves Fjord's events over.
+
 Leave everything unset to run with Apple Calendar sync disabled — everything
-else works fine without it. Outbound publishing (the `.ics` feed) needs no
-config; its subscribe URL is on the Settings page once you're logged in.
+else works fine without it. The older subscribable `.ics` feed
+(`/calendar/fjord.ics?token=…`) still works for existing subscriptions, but
+is no longer offered on the Settings page.
 
 #### How credentials are stored
 

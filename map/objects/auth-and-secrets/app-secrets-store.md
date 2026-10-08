@@ -16,7 +16,7 @@ Kept out of `fjord.db` on purpose: if the database is ever backed up, exported, 
 
 ## Shape
 
-- `AppSecrets` dataclass: `session_secret`, `ics_token`, `pin_hash`, `icloud_username`, `icloud_app_password_enc`, `api_token`
+- `AppSecrets` dataclass: `session_secret`, `ics_token`, `pin_hash`, `icloud_username`, `icloud_app_password_enc`, `icloud_calendar_url`/`icloud_calendar_name` (target for `calendar-push`, not secret but cleared together with the credentials), `api_token`
 - `load()`/`save()` — file at `settings.secrets_path`, `chmod 0o600`
 - `secrets_store.encrypt`/`decrypt` — Fernet, key at `settings.credentials_key_path`, generated on first use
 
@@ -40,6 +40,7 @@ Citations: `backend/app/config_store.py:1-48`, `backend/app/secrets_store.py:1-3
 |---|---|
 | `backend/app/auth.py`, `routers/auth.py`, `routers/calendar.py`, `routers/ics_feed.py` | reads/writes |
 | `backend/app/caldav_client.py` | reads (credentials) |
+| `backend/app/calendar_push.py` | reads (target calendar) |
 | `backend/app/generate_api_token.py` | writes (`api_token` only) |
 
 ## See

@@ -3,11 +3,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app import models, schemas
+from app import calendar_push, models, schemas
 from app.config import settings
 from app.database import get_db
 
@@ -83,11 +83,11 @@ def _stop_series(db: Session, recurrence_id: str) -> None:
     )
 
 
-def _extend_recurring_series(db: Session) -> None:
+def _extend_recurring_series(db: Session) -> bool:
     """Tops up every recurring series so it has occurrences generated out to
     the horizon. CalDAV has no push either (see caldav_client), so both use
     the same trick: extend lazily on the next read rather than needing a
-    background scheduler."""
+    background scheduler. Returns whether any occurrences were added."""
     horizon = datetime.now(timezone.utc) + _RECURRENCE_HORIZON
     series = (
         db.query(models.Task.recurrence_id, func.max(models.Task.due_at))
@@ -110,13 +110,19 @@ def _extend_recurring_series(db: Session) -> None:
         dirty = True
     if dirty:
         db.commit()
+    return dirty
 
 
 @router.get("", response_model=list[schemas.Task])
-def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(get_db)):
+def list_tasks(
+    background_tasks: BackgroundTasks, status: models.TaskStatus | None = None, db: Session = Depends(get_db)
+):
     """All tasks across every project — the calendar view needs a cross-project
     list of meetings, unlike the per-project listing under /api/projects."""
-    _extend_recurring_series(db)
+    # Newly generated occurrences need writing to Apple Calendar too; this is
+    # also where earlier failed writes get retried.
+    if _extend_recurring_series(db) or calendar_push.has_pending():
+        background_tasks.add_task(calendar_push.sync)
     query = db.query(models.Task)
     if status is not None:
         query = query.filter(models.Task.status == status)
@@ -124,7 +130,7 @@ def list_tasks(status: models.TaskStatus | None = None, db: Session = Depends(ge
 
 
 @router.post("", response_model=schemas.Task, status_code=201)
-def create_meeting(payload: schemas.MeetingCreate, db: Session = Depends(get_db)):
+def create_meeting(payload: schemas.MeetingCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Meetings are project-less tasks, so unlike regular tasks (created via
     POST /api/projects/{project_id}/tasks) they get a standalone route here."""
     recurrence_id = str(uuid.uuid4()) if payload.recurring else None
@@ -147,6 +153,7 @@ def create_meeting(payload: schemas.MeetingCreate, db: Session = Depends(get_db)
 
     db.commit()
     db.refresh(task)
+    background_tasks.add_task(calendar_push.sync)
     return task
 
 
@@ -156,8 +163,11 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{task_id}", response_model=schemas.Task)
-def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends(get_db)):
+def update_task(
+    task_id: int, payload: schemas.TaskUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
     task = _get_task_or_404(task_id, db)
+    was_meeting = task.category == models.TaskCategory.meeting
     updates = payload.model_dump(exclude_unset=True)
     if "project_id" in updates and db.get(models.Project, updates["project_id"]) is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -191,11 +201,18 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
 
     db.commit()
     db.refresh(task)
+    if was_meeting or task.category == models.TaskCategory.meeting:
+        background_tasks.add_task(calendar_push.sync, changed_ids=[task.id])
     return task
 
 
 @router.patch("/series/{recurrence_id}", response_model=list[schemas.Task])
-def update_meeting_series(recurrence_id: str, payload: schemas.SeriesUpdate, db: Session = Depends(get_db)):
+def update_meeting_series(
+    recurrence_id: str,
+    payload: schemas.SeriesUpdate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     """Reschedules an entire recurring series to a new weekday/time (and
     optionally title/all_day). Not-yet-occurred rows are replaced by a fresh
     run generated from the new schedule; past rows are left as history."""
@@ -229,6 +246,7 @@ def update_meeting_series(recurrence_id: str, payload: schemas.SeriesUpdate, db:
     _generate_following_occurrences(db, anchor, recurrence_id, now + _RECURRENCE_HORIZON)
 
     db.commit()
+    background_tasks.add_task(calendar_push.sync)
     return (
         db.query(models.Task)
         .filter(models.Task.recurrence_id == recurrence_id)
@@ -238,8 +256,15 @@ def update_meeting_series(recurrence_id: str, payload: schemas.SeriesUpdate, db:
 
 
 @router.delete("/{task_id}", status_code=204)
-def delete_task(task_id: int, scope: Literal["single", "future"] = "single", db: Session = Depends(get_db)):
+def delete_task(
+    task_id: int,
+    background_tasks: BackgroundTasks,
+    scope: Literal["single", "future"] = "single",
+    db: Session = Depends(get_db),
+):
     task = _get_task_or_404(task_id, db)
+    if task.category == models.TaskCategory.meeting:
+        background_tasks.add_task(calendar_push.sync)
     if scope == "future" and task.recurrence_id is not None:
         recurrence_id = task.recurrence_id
         db.query(models.Task).filter(

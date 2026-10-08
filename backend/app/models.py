@@ -91,7 +91,8 @@ class Task(Base):
 
     __table_args__ = (
         CheckConstraint("criticality BETWEEN 1 AND 5", name="ck_tasks_criticality_range"),
-        # Never reuse a deleted id — it's the .ics feed event's UID (see routers/ics_feed.py).
+        # Never reuse a deleted id — it's the calendar event's UID and resource
+        # name (see app/calendar_push.py).
         {"sqlite_autoincrement": True},
     )
 

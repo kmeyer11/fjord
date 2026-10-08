@@ -6,9 +6,9 @@ status: verified
 entity: backend/app/routers/ics_feed.py
 ---
 
-# ICS feed (outbound export)
+# ICS feed (legacy outbound export)
 
-A public, token-gated `.ics` endpoint so Apple Calendar (or anything else) can subscribe to Fjord's meetings. The mirror image of `caldav-client.md` — that pulls external events in, this pushes Fjord's own events out.
+Superseded 2026-10-08 by `calendar-push.md` (Fjord writes into a calendar the user picks) and no longer shown on the Settings page; the route is kept so an existing subscription doesn't start failing. A public, token-gated `.ics` endpoint so Apple Calendar (or anything else) can subscribe to Fjord's meetings. The mirror image of `caldav-client.md` — that pulls external events in, this pushes Fjord's own events out.
 
 ## Why this shape
 
@@ -17,6 +17,7 @@ Apple's calendar client can't do a cookie login, so this route is checked by its
 ## Shape
 
 - One route: `GET /calendar/fjord.ics?token=...`
+- Query and event building are `calendar_push.published_meetings` / `task_event`, shared with the push so both always agree
 - Queries `Task` where `status=in_progress`, `due_at` not null, `category=meeting` — i.e. only upcoming meetings, never plain tasks or done/backlog items
 - Each timed task gets a fixed 30-minute block (`_EVENT_DURATION`) since tasks don't carry a duration; `all_day` tasks are published as `VALUE=DATE` events (local date, one day long)
 - Deleted meetings are simply left out; subscribed calendars replace their copy on each refresh, so they disappear (publishing `STATUS:CANCELLED` instead makes Apple Calendar keep them as "Cancelled")
@@ -40,7 +41,7 @@ Citations: `backend/app/routers/ics_feed.py` (updated 2026-09-30)
 | Surface | Role |
 |---|---|
 | Apple Calendar / any `.ics` subscriber (outside the tree) | reads — hardcodes this URL with the feed token; ask the owner before changing the route path or token param name |
-| `frontend/src/pages/Settings.tsx` (feed-token display, via `getFeedToken`) | reads the token to build the subscribe URL |
+| `GET /auth/feed-token` | still serves the token; nothing in the frontend calls it since the Settings section was removed |
 
 ## See
 

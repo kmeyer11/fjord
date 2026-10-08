@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import type { AppleCalendar, CalendarStatus } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -15,20 +16,12 @@ function StatusDot({ ok }: { ok: boolean }) {
   return <span className={`size-2 rounded-full ${ok ? 'bg-moss' : 'bg-text-tertiary'}`} />
 }
 
-type CalendarStatus = {
-  configured: boolean
-  icloud_username: string | null
-  last_synced_at: string | null
-  last_error: string | null
-}
-
 export default function Settings() {
   const { t, locale } = useLanguage()
-  const [feedUrl, setFeedUrl] = useState<string | null>(null)
   const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const feedUrlInputRef = useRef<HTMLInputElement>(null)
+  const [calendars, setCalendars] = useState<AppleCalendar[] | null>(null)
+  const [calendarsError, setCalendarsError] = useState<string | null>(null)
 
   const [connecting, setConnecting] = useState(false)
   const [icloudEmail, setIcloudEmail] = useState('')
@@ -40,18 +33,32 @@ export default function Settings() {
   const [newPin, setNewPin] = useState('')
   const [pinSaved, setPinSaved] = useState(false)
 
-  function loadFeedUrl() {
-    api.getFeedToken().then(({ token }) => setFeedUrl(`${window.location.origin}/calendar/fjord.ics?token=${token}`))
-  }
-
   function loadCalStatus() {
     api.getCalendarStatus().then(setCalStatus)
   }
 
   useEffect(() => {
-    loadFeedUrl()
     loadCalStatus()
   }, [])
+
+  const configured = !!calStatus?.configured
+  useEffect(() => {
+    if (!configured) return
+    api
+      .listCalendars()
+      .then(setCalendars)
+      .catch((e) => setCalendarsError(e instanceof Error ? e.message : String(e)))
+  }, [configured])
+
+  async function chooseTargetCalendar(url: string) {
+    setCalendarsError(null)
+    try {
+      const pushStatus = await api.setTargetCalendar(url || null)
+      setCalStatus((prev) => prev && { ...prev, ...pushStatus })
+    } catch (e) {
+      setCalendarsError(e instanceof Error ? e.message : String(e))
+    }
+  }
 
   async function refreshCalendar() {
     setRefreshing(true)
@@ -60,39 +67,10 @@ export default function Settings() {
       const start = new Date(now.getTime() - 7 * 86400_000)
       const end = new Date(now.getTime() + 21 * 86400_000)
       await api.listExternalEvents(start, end, true)
+      if (calStatus?.target_calendar) await api.pushCalendar()
       loadCalStatus()
     } finally {
       setRefreshing(false)
-    }
-  }
-
-  async function copyFeedUrl() {
-    if (!feedUrl) return
-    try {
-      // navigator.clipboard needs a secure context (https, or the browser's own
-      // localhost) — this app is meant to be opened over plain http from a phone
-      // on the LAN (see FJORD_HOST default), which is *not* secure, so this API
-      // is routinely unavailable there and throws/rejects.
-      await navigator.clipboard.writeText(feedUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // Fall back to the legacy selection-based copy, which works without the
-      // Clipboard API's secure-context requirement.
-      const input = feedUrlInputRef.current
-      if (input) {
-        input.focus()
-        input.select()
-        try {
-          if (document.execCommand('copy')) {
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-          }
-        } catch {
-          // Both copy paths failed — the input is still focused and selected
-          // so the user can copy it manually.
-        }
-      }
     }
   }
 
@@ -165,6 +143,31 @@ export default function Settings() {
                     ? t.settings.lastSynced(new Date(calStatus.last_synced_at).toLocaleString(locale))
                     : t.settings.notSyncedYet}
               </p>
+              <div className="mt-4 border-t border-hairline pt-4">
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-[14px] text-text">{t.settings.targetCalendar}</span>
+                  <select
+                    value={calStatus.target_calendar?.url ?? ''}
+                    onChange={(e) => chooseTargetCalendar(e.target.value)}
+                    disabled={!calendars}
+                    className="min-w-0 rounded-lg border border-hairline bg-bg px-3 py-1.5 text-[14px] text-text outline-none focus:border-accent disabled:opacity-40"
+                  >
+                    {!calendars && <option value={calStatus.target_calendar?.url ?? ''}>{t.settings.loadingCalendars}</option>}
+                    {calendars && <option value="">{t.settings.targetNone}</option>}
+                    {calendars?.map((c) => (
+                      <option key={c.url} value={c.url}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {calendarsError && <p className="mt-2 text-[12px] text-clay">{calendarsError}</p>}
+                {calStatus.target_calendar && (
+                  <p className="mt-2 text-[12px] text-text-tertiary">
+                    {calStatus.last_push_error ? t.settings.lastPushFailed(calStatus.last_push_error) : t.settings.targetHint}
+                  </p>
+                )}
+              </div>
               <button onClick={disconnectICloud} className="mt-3 text-[13px] font-medium text-clay">
                 {t.settings.disconnect}
               </button>
@@ -222,24 +225,6 @@ export default function Settings() {
               </button>
             </div>
           )}
-        </SettingsSection>
-
-        <SettingsSection title={t.settings.publishTitle}>
-          <p className="mb-3 text-[13px] text-text-secondary">{t.settings.publishHint}</p>
-          <input
-            ref={feedUrlInputRef}
-            readOnly
-            value={feedUrl ?? '…'}
-            onFocus={(e) => e.currentTarget.select()}
-            className="w-full rounded-lg border border-hairline bg-bg px-3 py-2 font-mono text-[12px] text-text-secondary outline-none focus:border-accent"
-          />
-          <button
-            onClick={copyFeedUrl}
-            className="mt-2 rounded-full bg-accent px-3 py-1.5 text-[13px] font-semibold text-bg"
-          >
-            {copied ? t.settings.copied : t.settings.copyLink}
-          </button>
-          <p className="mt-3 text-[12px] text-text-tertiary">{t.settings.subscribeSteps}</p>
         </SettingsSection>
 
         <SettingsSection title={t.settings.passcode}>

@@ -10,7 +10,7 @@ Everything currently catalogued is **live** — no leftover or ghost code found 
 
 - **"Meeting" is not a type.** The DB model is `Task` (`backend/app/models.py:60`) with `category: task | meeting`. A meeting is a project-less `Task` row (`project_id=None`) with `category=meeting`. Don't add a separate `Meeting` table — see `objects/core/task.md`.
 - **Two auth mechanisms, one dependency.** Browser sessions (PIN → cookie) and the MCP server's bearer token both satisfy `require_session_or_api_token` (`backend/app/auth.py:124`). They are not interchangeable elsewhere — `require_session` alone (cookie only) still gates a few routes like `/auth/feed-token`. See `objects/auth-and-secrets/`.
-- **Two calendars, one word.** "Calendar" in the UI blends two different data sources: Fjord's own tasks/meetings, and read-only external events pulled from iCloud via CalDAV (`objects/calendar-sync/`). They're merged client-side, not in one backend model.
+- **Two calendars, one word.** "Calendar" in the UI blends two different data sources: Fjord's own tasks/meetings, and read-only external events pulled from iCloud via CalDAV (`objects/calendar-sync/`). They're merged client-side, not in one backend model. Fjord also writes its meetings into one iCloud calendar of the user's choice (`calendar-push.md`); those come back on the inbound read and are filtered out by UID so they don't show twice.
 - **Secrets live outside `fjord.db` on purpose.** `AppSecrets` (session secret, PIN hash, iCloud creds, API token, ICS token) is a separate JSON file (`backend/app/config_store.py`), not a DB table — so a database backup/export never carries login-forging material. Don't "simplify" this into a table without re-reading the comment at `config_store.py:1`.
 
 ## Reading order
