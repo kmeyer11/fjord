@@ -93,14 +93,17 @@ export default function Calendar() {
   // bucketed into the grid or the sidebar.
   const tasksByDay = new Map<string, Task[]>()
   const meetingTasksRaw: Task[] = []
+  const now = new Date()
+  const todayKey = dateKey(now)
   for (const task of tasks) {
     if (task.category !== 'meeting' || !task.due_at) continue
     const key = dateKey(new Date(task.due_at))
     tasksByDay.set(key, [...(tasksByDay.get(key) ?? []), task])
-    // A recurring series materializes many rows into the future — only
-    // surface upcoming ones here, or the sidebar list grows unbounded.
-    const isPastRecurrence = task.recurrence_id && new Date(task.due_at) < new Date()
-    if (!isPastRecurrence) meetingTasksRaw.push(task)
+    // The sidebar lists what's coming up; past meetings stay on the grid
+    // only. An all-day meeting counts as past once its day is over, not at
+    // midnight when it starts.
+    const isPast = task.all_day ? key < todayKey : new Date(task.due_at) < now
+    if (!isPast) meetingTasksRaw.push(task)
   }
   // A recurring series is one meeting, not N — collapse it to its next
   // upcoming occurrence; the calendar grid still shows every individual date.
