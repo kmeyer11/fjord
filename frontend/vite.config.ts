@@ -16,12 +16,6 @@ export default defineConfig(({ mode }) => {
       host: true,
       proxy: {
         '/api': apiTarget,
-        // The .ics feed lives outside /api (it's a plain URL Apple Calendar subscribes
-        // to, not a JSON endpoint) but still needs proxying so the dev server behaves
-        // like the single-process production deployment. Scoped to the exact feed
-        // path — a bare "/calendar" prefix would also swallow the SPA's own
-        // client-side /calendar route.
-        '/calendar/fjord.ics': apiTarget,
       },
     },
   }

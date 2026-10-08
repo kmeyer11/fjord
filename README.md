@@ -177,15 +177,13 @@ are overwritten the next time the meeting changes in Fjord (or on "Refresh
 now"). Switching to another calendar moves Fjord's events over.
 
 Leave everything unset to run with Apple Calendar sync disabled — everything
-else works fine without it. The older subscribable `.ics` feed
-(`/calendar/fjord.ics?token=…`) still works for existing subscriptions, but
-is no longer offered on the Settings page.
+else works fine without it.
 
 #### How credentials are stored
 
 `fjord.db` holds only your projects and tasks — nothing security-sensitive
-lives there. The PIN hash, session-signing secret, `.ics` feed token, and
-iCloud credentials all live in a separate local file instead
+lives there. The PIN hash, session-signing secret, and iCloud
+credentials all live in a separate local file instead
 (`backend/.fjord_secrets.json`, `chmod 600`, gitignored — `/data/secrets.json`
 in Docker). That way a copy of your database (a backup, an accidental
 `git add`, exporting your data to move it) never carries what's needed to
@@ -260,10 +258,11 @@ backend/
     models.py           Project, Task ORM models
     schemas.py           Pydantic request/response schemas
     auth.py              PIN hashing + signed session cookies
-    config_store.py      Local file store for PIN hash, session secret, iCloud creds, feed token
+    config_store.py      Local file store for PIN hash, session secret, iCloud creds + target calendar
     secrets_store.py      Fernet encryption for the iCloud app password
     caldav_client.py     Read-only iCloud CalDAV polling (with cache)
-    routers/             API route handlers (projects, tasks, calendar, auth, ics feed)
+    calendar_push.py     Writes meetings into the chosen iCloud calendar
+    routers/             API route handlers (projects, tasks, calendar, auth, preferences)
   alembic/              Schema migrations (see "Changing the database schema" above)
   requirements.txt
 frontend/
@@ -285,7 +284,7 @@ scripts/
 2. ✅ Projects + backlog CRUD, no calendar yet
 3. ✅ Calendar view UI with local (in-app only) scheduling — no Apple sync yet
 4. ✅ CalDAV read integration — show existing Apple Calendar events in the calendar view
-5. ✅ `.ics` feed endpoint — publish scheduled tasks (subscribe flow needs confirming on real Mac/iPhone hardware)
+5. ✅ Write meetings into a chosen Apple Calendar over CalDAV (replaced the original `.ics` subscription feed)
 6. ✅ PIN auth
 7. Confirm phone access over local Wi-Fi; wire up Tailscale for away-from-home access
 8. Polish pass, test on phone, iterate

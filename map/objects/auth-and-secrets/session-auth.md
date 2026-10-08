@@ -27,7 +27,7 @@ Citations: `backend/app/auth.py:13-138`
 - **owns:** nothing persisted itself — reads/writes `pin_hash`, `session_secret` on `objects/auth-and-secrets/app-secrets-store.md`
 - **owned-by:** nothing
 - **joins:** `objects/auth-and-secrets/api-token.md` via `require_session_or_api_token`, the shared FastAPI dependency both paths satisfy
-- **looks-like-but-is-not:** the API bearer token — same dependency gates both, but they're not interchangeable everywhere: a few routes (`/auth/feed-token`, `/auth/change-pin`) require `require_session` specifically, cookie-only, no bearer fallback
+- **looks-like-but-is-not:** the API bearer token — same dependency gates both, but they're not interchangeable everywhere: `/auth/change-pin` requires `require_session` specifically, cookie-only, no bearer fallback
 
 ## If you change this
 

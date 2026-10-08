@@ -8,7 +8,7 @@ entity: backend/app/config_store.py
 
 # AppSecrets store
 
-The single JSON file holding every security-sensitive value: session-signing secret, PIN hash, `.ics` feed token, iCloud credentials (app password encrypted), API bearer token. Deliberately not a `fjord.db` table.
+The single JSON file holding every security-sensitive value: session-signing secret, PIN hash, iCloud credentials and target calendar (app password encrypted), API bearer token. Deliberately not a `fjord.db` table.
 
 ## Why this shape
 
@@ -16,8 +16,8 @@ Kept out of `fjord.db` on purpose: if the database is ever backed up, exported, 
 
 ## Shape
 
-- `AppSecrets` dataclass: `session_secret`, `ics_token`, `pin_hash`, `icloud_username`, `icloud_app_password_enc`, `icloud_calendar_url`/`icloud_calendar_name` (target for `calendar-push`, not secret but cleared together with the credentials), `api_token`
-- `load()`/`save()` — file at `settings.secrets_path`, `chmod 0o600`
+- `AppSecrets` dataclass: `session_secret`, `pin_hash`, `icloud_username`, `icloud_app_password_enc`, `icloud_calendar_url`/`icloud_calendar_name` (target for `calendar-push`, not secret but cleared together with the credentials), `api_token`
+- `load()`/`save()` — file at `settings.secrets_path`, `chmod 0o600`; `load()` ignores keys that are no longer fields (e.g. the removed `ics_token`), so removing a field needs no migration
 - `secrets_store.encrypt`/`decrypt` — Fernet, key at `settings.credentials_key_path`, generated on first use
 
 Citations: `backend/app/config_store.py:1-48`, `backend/app/secrets_store.py:1-35`
@@ -38,7 +38,7 @@ Citations: `backend/app/config_store.py:1-48`, `backend/app/secrets_store.py:1-3
 
 | Surface | Role |
 |---|---|
-| `backend/app/auth.py`, `routers/auth.py`, `routers/calendar.py`, `routers/ics_feed.py` | reads/writes |
+| `backend/app/auth.py`, `routers/auth.py`, `routers/calendar.py` | reads/writes |
 | `backend/app/caldav_client.py` | reads (credentials) |
 | `backend/app/calendar_push.py` | reads (target calendar) |
 | `backend/app/generate_api_token.py` | writes (`api_token` only) |

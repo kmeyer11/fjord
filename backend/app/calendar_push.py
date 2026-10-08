@@ -57,13 +57,13 @@ _last_error: str | None = None
 _last_synced_at: datetime | None = None
 
 
-def uid(task_id: int) -> str:
-    """Event UID for a task. Also used by the .ics feed, and how the inbound
-    sync recognizes Fjord's own events (see caldav_client.is_fjord_event)."""
+def _uid(task_id: int) -> str:
+    """Event UID for a task. The inbound sync recognizes Fjord's own events
+    by its prefix (see caldav_client.is_fjord_event)."""
     return f"{_RESOURCE_PREFIX}{task_id}@fjord.local"
 
 
-def published_meetings(db: Session) -> list[models.Task]:
+def _published_meetings(db: Session) -> list[models.Task]:
     """Meetings that belong on a calendar: scheduled, dated, not done."""
     return (
         db.query(models.Task)
@@ -76,9 +76,9 @@ def published_meetings(db: Session) -> list[models.Task]:
     )
 
 
-def task_event(task: models.Task) -> Event:
+def _task_event(task: models.Task) -> Event:
     event = Event()
-    event.add("uid", uid(task.id))
+    event.add("uid", _uid(task.id))
     event.add("summary", task.title)
     if task.all_day:
         # A date (not datetime) value is written as VALUE=DATE, which is
@@ -100,7 +100,7 @@ def _task_ics(task: models.Task) -> bytes:
     cal = Calendar()
     cal.add("prodid", "-//Fjord//calendar-push//EN")
     cal.add("version", "2.0")
-    cal.add_component(task_event(task))
+    cal.add_component(_task_event(task))
     return cal.to_ical()
 
 
@@ -172,7 +172,7 @@ def sync(changed_ids: Iterable[int] = (), push_all: bool = False) -> None:
             calendar = _open_calendar(target["url"])
             if calendar is None:
                 return
-            meetings = {task.id: task for task in published_meetings(db)}
+            meetings = {task.id: task for task in _published_meetings(db)}
             existing = _fjord_resources(calendar)
 
             for task_id, url in existing.items():

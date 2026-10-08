@@ -8,7 +8,7 @@ entity: backend/app/calendar_push.py
 
 # Calendar push (outbound write-through)
 
-Writes Fjord's meetings into one iCloud calendar the user picks on the Settings page (e.g. their existing "Arbejde"), over CalDAV. Replaces the subscribe-to-a-feed model of `ics-feed.md` — Fjord now lives inside a calendar the user already has instead of publishing its own.
+Writes Fjord's meetings into one iCloud calendar the user picks on the Settings page (e.g. their existing "Arbejde"), over CalDAV. Replaced (and the 2026-10-08 follow-up removed) the old subscribable `.ics` feed — Fjord now lives inside a calendar the user already has instead of publishing its own.
 
 ## Why this shape
 
@@ -20,7 +20,7 @@ Writes run as FastAPI background tasks after each meeting mutation, so the UI ne
 
 - Target calendar: `icloud_calendar_url` / `icloud_calendar_name` in `AppSecrets` (cleared on disconnect)
 - In-memory state: `_pending_ids` (meetings whose write failed, retried next sync), `_full_push_pending`, `_last_error`, `_last_synced_at` — lost on restart; "Refresh now" does a full push to catch up
-- Shared with the `.ics` feed: `published_meetings()` (the which-meetings filter) and `task_event()` (one task → one VEVENT, fixed 30-min block, all-day as `VALUE=DATE`)
+- `_published_meetings()` (the which-meetings filter) and `_task_event()` (one task → one VEVENT, fixed 30-min block, all-day as `VALUE=DATE`)
 
 Citations: `backend/app/calendar_push.py` (added 2026-10-08)
 
@@ -33,7 +33,7 @@ Citations: `backend/app/calendar_push.py` (added 2026-10-08)
 
 ## If you change this
 
-- **Hits:** `routers/tasks.py` (every meeting write schedules `calendar_push.sync`), `routers/calendar.py` (`/calendars`, `/target`, `/push`, `/status`), `routers/ics_feed.py` (shared builder), `caldav_client.is_fjord_event` (the inbound view hides these events by UID prefix so meetings don't show twice), Settings page
+- **Hits:** `routers/tasks.py` (every meeting write schedules `calendar_push.sync`), `routers/calendar.py` (`/calendars`, `/target`, `/push`, `/status`), `caldav_client.is_fjord_event` (the inbound view hides these events by UID prefix so meetings don't show twice), Settings page
 - **Changing the resource name or UID prefix:** existing events in the user's calendar become invisible to the sync — they'd be orphaned (not deleted) and duplicated
 - **Does not hit:** `fjord.db` schema — nothing about sync state is persisted there
 

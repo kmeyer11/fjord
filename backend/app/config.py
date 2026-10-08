@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     port: int = 8000
     frontend_dist_dir: Path = BACKEND_DIR.parent / "frontend" / "dist"
 
-    # Security-sensitive app state (PIN hash, session-signing secret, .ics
-    # feed token, iCloud credentials) — deliberately kept out of fjord.db,
+    # Security-sensitive app state (PIN hash, session-signing secret, iCloud
+    # credentials) — deliberately kept out of fjord.db,
     # which holds only your projects and tasks. See app.config_store.
     secrets_path: Path = BACKEND_DIR / ".fjord_secrets.json"
 

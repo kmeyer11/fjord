@@ -1,5 +1,5 @@
 """Local, file-based store for security-sensitive app state — PIN hash,
-session-signing secret, .ics feed token, iCloud credentials (app password
+session-signing secret, iCloud credentials (app password
 encrypted, see app.secrets_store) and the calendar Fjord writes into.
 
 Deliberately kept out of fjord.db, which holds only your projects and
@@ -12,7 +12,7 @@ it's not meant to travel with your project data.
 import json
 import os
 import secrets
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 
 from app.config import settings
 
@@ -20,7 +20,6 @@ from app.config import settings
 @dataclass
 class AppSecrets:
     session_secret: str
-    ics_token: str
     pin_hash: str | None = None
     icloud_username: str | None = None
     icloud_app_password_enc: str | None = None
@@ -38,8 +37,12 @@ class AppSecrets:
 def load() -> AppSecrets:
     path = settings.secrets_path
     if path.is_file():
-        return AppSecrets(**json.loads(path.read_text()))
-    fresh = AppSecrets(session_secret=secrets.token_urlsafe(32), ics_token=secrets.token_urlsafe(24))
+        # Skip keys from older versions (e.g. the removed .ics feed token);
+        # they're dropped from the file on the next save().
+        known = {f.name for f in fields(AppSecrets)}
+        stored = json.loads(path.read_text())
+        return AppSecrets(**{key: value for key, value in stored.items() if key in known})
+    fresh = AppSecrets(session_secret=secrets.token_urlsafe(32))
     save(fresh)
     return fresh
 
