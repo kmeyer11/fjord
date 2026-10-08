@@ -42,6 +42,23 @@ export interface Task {
 }
 
 /** A read-only event pulled from an Apple Calendar via CalDAV. */
+export interface AppleCalendar {
+  url: string
+  name: string
+  color: string | null
+}
+
+export interface CalendarStatus {
+  configured: boolean
+  icloud_username: string | null
+  last_synced_at: string | null
+  last_error: string | null
+  /** The calendar Fjord writes its meetings into, or null if none is picked. */
+  target_calendar: { url: string; name: string } | null
+  last_pushed_at: string | null
+  last_push_error: string | null
+}
+
 export interface ExternalEvent {
   id: string
   calendar: string

@@ -27,7 +27,7 @@ Nothing is stored to mark a task archived — it's entirely computed from `statu
 ## If you change this
 
 - **Hits:** `ProjectBoard.tsx` (board counts/list), `ProjectArchive.tsx` (archive view) — both assume this exact split
-- **Does not hit:** `ics-export` (filters on `in_progress`, never sees `done` tasks at all, so archive age is irrelevant there); the cross-project `list_tasks` used by the calendar (`routers/tasks.py:115-123`) does **not** apply this filter, by design — confirmed 2026-09-14: the calendar is chronological (a past meeting belongs on its date regardless of status), while the board has no time axis and needs active pruning to stay usable. Don't "fix" this into uniform filtering.
+- **Does not hit:** `calendar-push` (filters on `in_progress`, never sees `done` tasks at all, so archive age is irrelevant there); the cross-project `list_tasks` used by the calendar (`routers/tasks.py:115-123`) does **not** apply this filter, by design — confirmed 2026-09-14: the calendar is chronological (a past meeting belongs on its date regardless of status), while the board has no time axis and needs active pruning to stay usable. Don't "fix" this into uniform filtering.
 
 ## Surfaces
 

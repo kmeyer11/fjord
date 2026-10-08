@@ -1,4 +1,4 @@
-import type { ExternalEvent, Preferences, Project, ProjectWithCounts, Task, TaskCriticality, TaskStatus } from './types'
+import type { AppleCalendar, CalendarStatus, ExternalEvent, Preferences, Project, ProjectWithCounts, Task, TaskCriticality, TaskStatus } from './types'
 
 export const UNAUTHORIZED_EVENT = 'fjord:unauthorized'
 
@@ -45,7 +45,6 @@ export const api = {
   getAuthStatus: () => request<{ pin_set: boolean; authenticated: boolean }>('/auth/status'),
   login: (pin: string) => request<{ ok: true }>('/auth/login', { method: 'POST', body: JSON.stringify({ pin }) }),
   logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),
-  getFeedToken: () => request<{ token: string }>('/auth/feed-token'),
   changePin: (pin: string) => request<{ ok: true }>('/auth/change-pin', { method: 'POST', body: JSON.stringify({ pin }) }),
 
   listProjects: () => request<ProjectWithCounts[]>('/projects'),
@@ -100,13 +99,11 @@ export const api = {
     request<ExternalEvent[]>(
       `/calendar/external-events?start=${start.toISOString()}&end=${end.toISOString()}${force ? '&force=true' : ''}`,
     ),
-  getCalendarStatus: () =>
-    request<{
-      configured: boolean
-      icloud_username: string | null
-      last_synced_at: string | null
-      last_error: string | null
-    }>('/calendar/status'),
+  getCalendarStatus: () => request<CalendarStatus>('/calendar/status'),
+  listCalendars: () => request<AppleCalendar[]>('/calendar/calendars'),
+  setTargetCalendar: (url: string | null) =>
+    request<CalendarStatus>('/calendar/target', { method: 'PUT', body: JSON.stringify({ url }) }),
+  pushCalendar: () => request<CalendarStatus>('/calendar/push', { method: 'POST' }),
   connectICloud: (username: string, app_password: string) =>
     request<{ ok: true }>('/calendar/icloud-credentials', {
       method: 'POST',

@@ -17,7 +17,7 @@ Generated offline via `python -m app.generate_api_token` (`generate_api_token.py
 ## Shape
 
 - 32-byte URL-safe random token (`secrets.token_urlsafe(32)`)
-- Read via `Authorization: Bearer <token>` header, checked only inside `require_session_or_api_token` (`auth.py:124`) — routes gated by plain `require_session` (feed-token, change-pin) don't accept it
+- Read via `Authorization: Bearer <token>` header, checked only inside `require_session_or_api_token` (`auth.py:124`) — routes gated by plain `require_session` (change-pin) don't accept it
 
 Citations: `backend/app/generate_api_token.py:1-26`, `backend/app/auth.py:124-138`
 
@@ -26,7 +26,7 @@ Citations: `backend/app/generate_api_token.py:1-26`, `backend/app/auth.py:124-13
 - **owns:** nothing
 - **owned-by:** stored as a field on `objects/auth-and-secrets/app-secrets-store.md`
 - **joins:** `objects/mcp-surface/fjord-mcp-server.md` — the only current consumer
-- **looks-like-but-is-not:** the `ics_token` — that gates one unauthenticated public route (`/calendar/fjord.ics`); this gates the full authenticated API surface
+- **looks-like-but-is-not:** the iCloud app password — that authenticates Fjord *to* iCloud; this authenticates clients *to* Fjord
 
 ## If you change this
 

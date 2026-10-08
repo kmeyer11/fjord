@@ -1,6 +1,6 @@
 // Mirrors the --color-fjord/glacier/moss/birch/clay/heather tokens in index.css.
 // Stored as literal hex (rather than a var() reference) so the color travels
-// intact outside the app shell — the .ics feed and any future clients.
+// intact outside the app shell, e.g. to future non-browser clients.
 export const PROJECT_PALETTE = [
   { name: 'Fjord', value: '#3c6e90' },
   { name: 'Glacier', value: '#2f8f89' },

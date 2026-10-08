@@ -35,7 +35,7 @@ Citations: `backend/app/models.py:60-89`
 
 ## If you change this
 
-- **Hits:** every router that touches tasks (`routers/tasks.py`, `routers/projects.py` task endpoints, `routers/ics_feed.py`'s query), `schemas.Task`/`TaskCreate`/`TaskUpdate`, frontend `Task` type (`frontend/src/api/types.ts`), the recurrence generator (`_generate_following_occurrences`, `routers/tasks.py:53`) which clones a template task's fields, MCP tools that create/list tasks
+- **Hits:** every router that touches tasks (`routers/tasks.py`, `routers/projects.py` task endpoints, `calendar_push._published_meetings`), `schemas.Task`/`TaskCreate`/`TaskUpdate`, frontend `Task` type (`frontend/src/api/types.ts`), the recurrence generator (`_generate_following_occurrences`, `routers/tasks.py:53`) which clones a template task's fields, MCP tools that create/list tasks
 - **Does not hit:** `Project`'s own counts logic beyond re-summing (`_with_counts` just reads `status`/`completed_at`, doesn't need to change for most `Task` field additions); CalDAV sync (reads a completely separate source)
 
 ## Surfaces
@@ -43,7 +43,7 @@ Citations: `backend/app/models.py:60-89`
 | Surface | Role |
 |---|---|
 | `backend/app/routers/tasks.py`, `routers/projects.py` | reads/writes |
-| `backend/app/routers/ics_feed.py` | reads only (`category=meeting`, `status=in_progress`, `due_at` not null) |
+| `backend/app/calendar_push.py` | reads only (`category=meeting`, `status=in_progress`, `due_at` not null) |
 | `frontend/src/pages/ProjectBoard.tsx`, `Calendar.tsx`, `Dashboard.tsx` | reads/writes |
 | MCP server (`create_task`, `list_tasks`, `update_task`, `delete_task`) | reads/writes |
 

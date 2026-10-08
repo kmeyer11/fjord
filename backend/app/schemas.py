@@ -113,6 +113,17 @@ class ICloudCredentials(BaseModel):
     app_password: str
 
 
+class CalendarInfo(BaseModel):
+    url: str
+    name: str
+    color: str | None = None
+
+
+class TargetCalendarUpdate(BaseModel):
+    # None stops writing meetings to Apple Calendar.
+    url: str | None
+
+
 class Preferences(BaseModel):
     # A preset name from the frontend's fjord-scene/presets.ts; the frontend
     # falls back to its default for names it doesn't know, so only the shape

@@ -1,4 +1,6 @@
 """Inbound Apple Calendar sync: read-only CalDAV polling against iCloud.
+(The outbound direction — writing Fjord's meetings into a calendar — is
+app.calendar_push.)
 
 CalDAV has no push/webhook, so results are cached briefly and re-fetched on
 the next request past the TTL — this is the "poll periodically / on-demand
@@ -75,6 +77,41 @@ def _normalize_color(value: str | None) -> str | None:
     return value[:7].lower()
 
 
+def _calendar_color(calendar: caldav.Calendar) -> str | None:
+    # Not every CalDAV server implements this (non-standard) property, so a
+    # failure here shouldn't take down the whole request — just the color.
+    try:
+        return _normalize_color(calendar.get_property(ical.CalendarColor()))
+    except Exception:  # noqa: BLE001 - best-effort; calendars still work without a color
+        return None
+
+
+def is_fjord_event(uid: str) -> bool:
+    """Events Fjord wrote itself (see app.calendar_push) — already shown as
+    meetings, so the calendar view would otherwise show them twice."""
+    return uid.startswith("fjord-task-")
+
+
+def list_calendars() -> list[dict]:
+    """Calendars that can hold events (iCloud also lists Reminders lists as
+    calendars), for picking where Fjord writes its meetings. Raises on
+    connection failure — this is a direct user action, not background sync."""
+    creds = get_credentials()
+    if creds is None:
+        return []
+    username, password = creds
+    client = caldav.DAVClient(url=settings.caldav_url, username=username, password=password)
+    calendars = []
+    for calendar in client.principal().calendars():
+        try:
+            if "VEVENT" not in calendar.get_supported_components():
+                continue
+        except Exception:  # noqa: BLE001 - unknown support: offer it rather than hide it
+            pass
+        calendars.append({"url": str(calendar.url), "name": str(calendar.name), "color": _calendar_color(calendar)})
+    return calendars
+
+
 def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[dict]:
     global _last_error, _last_synced_at
 
@@ -95,16 +132,12 @@ def fetch_events(start: datetime, end: datetime, force: bool = False) -> list[di
         events: list[dict] = []
         for calendar in principal.calendars():
             # One extra property fetch per calendar (not per event) — cheap, and
-            # covered by the same cache/TTL as the events themselves. Not every
-            # CalDAV server implements this (non-standard) property, so a
-            # failure here shouldn't take down the whole sync — just that
-            # calendar's color.
-            try:
-                calendar_color = _normalize_color(calendar.get_property(ical.CalendarColor()))
-            except Exception:  # noqa: BLE001 - best-effort; events still render without a color
-                calendar_color = None
+            # covered by the same cache/TTL as the events themselves.
+            calendar_color = _calendar_color(calendar)
             for result in calendar.search(start=start, end=end, event=True, expand=True):
                 vevent = result.icalendar_component
+                if is_fjord_event(str(vevent.get("uid", ""))):
+                    continue
                 dtstart = vevent["dtstart"].dt
                 dtend_prop = vevent.get("dtend")
                 dtend = dtend_prop.dt if dtend_prop else dtstart

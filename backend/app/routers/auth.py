@@ -57,11 +57,6 @@ def logout(response: Response):
     return {"ok": True}
 
 
-@router.get("/feed-token", dependencies=[Depends(auth.require_session)])
-def feed_token():
-    return {"token": config_store.load().ics_token}
-
-
 @router.post("/change-pin", dependencies=[Depends(auth.require_session)])
 def change_pin(payload: PinPayload):
     app_secrets = config_store.load()

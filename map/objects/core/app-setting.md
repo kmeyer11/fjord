@@ -31,7 +31,7 @@ One generic table so a new preference needs no migration, only a field on `schem
 ## If you change this
 
 - **Hits:** `objects/frontend/home-ui.md` (reads/writes `scene`); `frontend/src/api/types.ts` `Preferences`
-- **Does not hit:** tasks, projects, the .ics feed, the MCP server
+- **Does not hit:** tasks, projects, the Apple Calendar push, the MCP server
 
 ## Surfaces
 
